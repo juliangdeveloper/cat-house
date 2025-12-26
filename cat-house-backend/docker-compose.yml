@@ -1,0 +1,97 @@
+﻿version: '3.8'
+
+# NOTE: This docker-compose.yml does NOT include a local PostgreSQL service.
+# All services connect to Neon PostgreSQL (serverless).
+# Set DATABASE_URL in .env file for each service.
+
+services:
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: cathouse-auth
+    ports:
+      - "8005:8005"
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - ./auth-service/app:/app/app:ro
+    networks:
+      - cathouse-network
+    restart: unless-stopped
+
+  # Catalog Service
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: cathouse-catalog
+    ports:
+      - "8002:8002"
+    env_file:
+      - ./catalog-service/.env
+    volumes:
+      - ./catalog-service/app:/app/app:ro
+    networks:
+      - cathouse-network
+    restart: unless-stopped
+
+  # Installation Service
+  installation-service:
+    build:
+      context: ./installation-service
+      dockerfile: Dockerfile
+    container_name: cathouse-installation
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./installation-service/.env
+    volumes:
+      - ./installation-service/app:/app/app:ro
+    networks:
+      - cathouse-network
+    restart: unless-stopped
+
+  # Proxy Service
+  proxy-service:
+    build:
+      context: ./proxy-service
+      dockerfile: Dockerfile
+    container_name: cathouse-proxy
+    ports:
+      - "8004:8004"
+    env_file:
+      - ./proxy-service/.env
+    volumes:
+      - ./proxy-service/app:/app/app:ro
+    networks:
+      - cathouse-network
+    restart: unless-stopped
+
+  # Health Aggregator Service
+  # Note: This service should be deployed separately and made publicly accessible
+  # for AWS API Gateway to reach it. The URL should be configured in terraform.tfvars
+  health-aggregator:
+    build:
+      context: ./health-aggregator
+      dockerfile: Dockerfile
+    container_name: cathouse-health
+    ports:
+      - "8000:8000"
+    networks:
+      - cathouse-network
+    depends_on:
+      - auth-service
+      - catalog-service
+      - installation-service
+      - proxy-service
+    restart: unless-stopped
+
+networks:
+  cathouse-network:
+    driver: bridge
+
+# API Gateway is now handled by AWS API Gateway
+# See terraform/ directory for infrastructure as code configuration
+# All services must be publicly accessible for API Gateway integration

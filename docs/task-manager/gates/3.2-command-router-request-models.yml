@@ -1,0 +1,62 @@
+# Quality Gate: Story 3.2 - Command Router & Request Models
+schema: 1
+story: "3.2"
+story_title: "Command Router & Request Models"
+gate: PASS
+status_reason: "All unit tests passing (15/15). Fixed TestClient async mocking issues by using dependency_overrides pattern. Integration test fixtures deferred to Story 3.3 as planned."
+reviewer: "Quinn (Test Architect)"
+updated: "2025-11-12T19:00:00Z"
+
+waiver: { active: false }
+
+top_issues:
+  - id: "TEST-002"
+    severity: low
+    finding: "Integration test fixtures (client, test_service_key) not yet created - deferred to Story 3.3"
+    suggested_owner: dev
+    suggested_action: "Add conftest.py fixtures in Story 3.3 when implementing handlers"
+
+evidence:
+  tests_reviewed: 15
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: "Service key authentication properly enforced, no sensitive data leakage in errors, CORS configured"
+  performance:
+    status: PASS
+    notes: "Async operations throughout, minimal overhead, connection pooling via dependency injection"
+  reliability:
+    status: PASS
+    notes: "Comprehensive error handling, HTTPException re-raised correctly, structured logging for debugging"
+  maintainability:
+    status: PASS
+    notes: "Excellent separation of concerns, comprehensive documentation, type hints, extensible design"
+
+quality_score: 95
+# 100 base - 5 for integration tests deferred = 95
+
+recommendations:
+  immediate: []
+  future:
+    - action: "Add integration test fixtures (client, test_service_key) in Story 3.3"
+      refs: ["tests/integration/conftest.py"]
+    - action: "Consider adding end-to-end tests with real handlers once Story 3.3 completes"
+      refs: ["tests/integration/test_command_execution.py"]
+
+test_results:
+  total_tests: 15
+  passed: 15
+  failed: 0
+  skipped: 0
+  warnings: 0
+  coverage: "Unit tests comprehensive - models, authentication, routing, error handling"
+  fixes_applied:
+    - "Replaced @patch decorators with dependency_overrides for TestClient compatibility"
+    - "Created pytest.ini with registered markers (unit, integration)"
+    - "Configured asyncio_default_fixture_loop_scope = function"
+    - "Updated CommandResponse to use @field_serializer (Pydantic V2)"

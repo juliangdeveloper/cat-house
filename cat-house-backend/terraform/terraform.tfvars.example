@@ -1,0 +1,15 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region = "us-east-1"
+
+# Backend service URLs - Update these with your actual service endpoints
+# These should be publicly accessible URLs for your microservices
+auth_service_url         = "https://your-auth-service.com"
+catalog_service_url      = "https://your-catalog-service.com"
+installation_service_url = "https://your-installation-service.com"
+proxy_service_url        = "https://your-proxy-service.com"
+health_aggregator_url    = "https://your-health-aggregator.com"
+
+# Optional: ARN of ACM certificate for custom domain
+# certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxx"

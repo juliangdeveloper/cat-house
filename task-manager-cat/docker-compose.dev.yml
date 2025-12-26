@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # FastAPI application service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: taskmanager-api-dev
+    ports:
+      - "8888:8000"  # Host:Container port mapping
+    volumes:
+      - ./app:/app/app  # Hot-reload for application code
+      - ./tests:/app/tests  # Hot-reload for test code
+    env_file:
+      - .env.dev
+    depends_on:
+      - postgres
+    networks:
+      - taskmanager-network
+
+  # PostgreSQL database service
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskmanager-postgres-dev
+    ports:
+      - "5435:5432"  # Host:Container port mapping
+    environment:
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+      POSTGRES_DB: taskmanager_dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - taskmanager-network
+
+# Named volumes for data persistence
+volumes:
+  postgres_dev_data:
+
+# Network for service communication
+networks:
+  taskmanager-network:
+    driver: bridge
