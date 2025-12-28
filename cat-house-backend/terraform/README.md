@@ -1,91 +1,147 @@
-# AWS API Gateway for Cat House Platform
+# Cat House Infrastructure - Terraform
 
-This directory contains Terraform configuration for deploying AWS API Gateway as the entry point for the Cat House Platform microservices.
+This directory contains Terraform configuration for deploying the complete Cat House infrastructure on AWS, including ECR, ECS Fargate, S3/CloudFront, and API Gateway.
 
-## Features
+## Infrastructure Components
 
-- ✅ **Path-based routing** to all backend services
-- ✅ **CORS configuration** for gamificator.click domain
-- ✅ **Rate limiting** with usage plans
-- ✅ **CloudWatch logging** and monitoring
-- ✅ **Throttling protection** (burst and sustained)
-- ✅ **Health check aggregation** endpoint
-- ✅ **Custom domain support** (optional)
+### Core Services
+- **ECR Repositories** (`ecr.tf`): Docker image registries for all 5 microservices
+- **ECS Cluster** (`ecs.tf`): Fargate cluster with task definitions and CloudWatch logs
+- **Frontend Hosting** (`frontend.tf`): S3 bucket + CloudFront distribution
+- **API Gateway** (`main.tf`, `routes.tf`): HTTP API for routing requests
+- **Secrets Management** (`ecs.tf`): AWS Secrets Manager for database credentials
+
+### Services Deployed
+1. `auth-service` (Port 8005) - Authentication and user management
+2. `catalog-service` (Port 8002) - Cat catalog management
+3. `installation-service` (Port 8003) - Installation tracking
+4. `proxy-service` (Port 8004) - External API proxy
+5. `health-aggregator` (Port 8000) - Health check aggregation
 
 ## Architecture
 
 ```
-Client Request
-    ↓
-AWS API Gateway (Regional)
-    ↓
-┌─────────────────────────────────┐
-│  /api/v1/auth        → Auth     │
-│  /api/v1/catalog     → Catalog  │
-│  /api/v1/installations → Install│
-│  /api/v1/proxy       → Proxy    │
-│  /health             → Health   │
-└─────────────────────────────────┘
+                    ┌─────────────────┐
+                    │   CloudFront    │ (Frontend)
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │   S3 Bucket     │
+                    └─────────────────┘
+
+                    ┌─────────────────┐
+         Client ───►│  API Gateway    │
+                    └────────┬────────┘
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+    ┌─────▼─────┐      ┌────▼────┐      ┌─────▼─────┐
+    │ ECS Task  │      │ECS Task │      │ ECS Task  │
+    │   Auth    │      │ Catalog │      │  Proxy    │
+    └───────────┘      └─────────┘      └───────────┘
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │ Neon PostgreSQL │
+                    │  (Serverless)   │
+                    └─────────────────┘
 ```
 
 ## Prerequisites
 
-1. **AWS Account** with appropriate permissions
-2. **Terraform** >= 1.0 installed
-3. **AWS CLI** configured with credentials
-4. **Backend services** deployed and accessible via HTTP/HTTPS
+1. **AWS Account** with appropriate IAM permissions for:
+   - ECR (Elastic Container Registry)
+   - ECS (Elastic Container Service)
+   - S3, CloudFront
+   - API Gateway
+   - IAM, Secrets Manager
+   - CloudWatch Logs
 
-## Setup
+2. **Terraform** >= 1.0 installed
+   ```bash
+   terraform version
+   ```
+
+3. **AWS CLI** configured with credentials
+   ```bash
+   aws configure
+   ```
+
+4. **Neon Database** URL (PostgreSQL connection string)
+
+## Quick Start
 
 ### 1. Configure Variables
 
-Copy the example variables file:
-
-```bash
-cp terraform.tfvars.example terraform.tfvars
-```
-
-Edit `terraform.tfvars` with your values:
+Create `terraform.tfvars`:
 
 ```hcl
 aws_region = "us-east-1"
+environment = "staging"  # or "production"
 
-auth_service_url         = "https://your-auth-service.com"
-catalog_service_url      = "https://your-catalog-service.com"
-installation_service_url = "https://your-installation-service.com"
-proxy_service_url        = "https://your-proxy-service.com"
-health_aggregator_url    = "https://your-health-aggregator.com"
+# Service URLs (for API Gateway routes - can be localhost during initial setup)
+auth_service_url         = "http://localhost:8005"
+catalog_service_url      = "http://localhost:8002"
+installation_service_url = "http://localhost:8003"
+proxy_service_url        = "http://localhost:8004"
+health_aggregator_url    = "http://localhost:8000"
 ```
 
-### 2. Initialize Terraform
+### 2. Create Database Secret
 
 ```bash
+# Staging environment
+aws secretsmanager create-secret \
+  --name cat-house/staging/database-url \
+  --secret-string "postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb" \
+  --region us-east-1
+
+# Production environment
+aws secretsmanager create-secret \
+  --name cat-house/production/database-url \
+  --secret-string "postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb" \
+  --region us-east-1
+```
+
+### 3. Initialize and Apply
+
+```bash
+# Initialize Terraform
 terraform init
-```
 
-### 3. Review Plan
-
-```bash
+# Review the plan
 terraform plan
-```
 
-### 4. Deploy
-
-```bash
+# Apply infrastructure
 terraform apply
 ```
 
-### 5. Get API Gateway URL
-
-After deployment, get the API Gateway URL:
+### 4. Build and Push Docker Images
 
 ```bash
-terraform output api_gateway_url
+# Get ECR login
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin $(terraform output -raw ecr_repository_urls | jq -r '.["auth-service"]' | cut -d'/' -f1)
+
+# Build and push all services
+cd ../
+for service in auth-service catalog-service installation-service proxy-service health-aggregator; do
+  echo "Building $service..."
+  docker build -t cat-house/$service -f $service/Dockerfile $service
+  
+  ECR_URL=$(cd terraform && terraform output -json ecr_repository_urls | jq -r ".[\"$service\"]")
+  docker tag cat-house/$service:latest $ECR_URL:latest
+  docker push $ECR_URL:latest
+done
 ```
 
-Example output:
-```
-https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod
+### 5. Get Outputs
+
+```bash
+terraform output
+terraform output cloudfront_domain_name
+terraform output api_gateway_url
 ```
 
 ## Usage

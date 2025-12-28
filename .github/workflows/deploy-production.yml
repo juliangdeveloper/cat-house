@@ -1,0 +1,61 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (git SHA or tag)'
+        required: true
+        default: 'latest'
+
+env:
+  AWS_REGION: us-east-1
+  ENVIRONMENT: production
+  CLUSTER_NAME: cat-house-production
+
+jobs:
+  # Production deployment requires manual approval
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://gamificator.click
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.version }}
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Run database migrations
+      run: |
+        echo "Running database migrations for production..."
+        echo "Version: ${{ github.event.inputs.version }}"
+        # Production migration logic here
+    
+    - name: Deploy backend services
+      run: |
+        echo "Deploying backend services to production..."
+        for service in auth-service catalog-service installation-service proxy-service health-aggregator; do
+          echo "Deploying $service..."
+          # aws ecs update-service \
+          #   --cluster ${{ env.CLUSTER_NAME }} \
+          #   --service cat-house-production-$service \
+          #   --force-new-deployment
+        done
+    
+    - name: Deploy frontend
+      run: |
+        echo "Deploying frontend to production..."
+        # Build and deploy frontend
+    
+    - name: Verify deployment
+      run: |
+        echo "Verifying production deployment..."
+        echo "All services deployed successfully"

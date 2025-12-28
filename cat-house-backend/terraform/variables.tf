@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "environment" {
+  description = "Environment name (development, staging, production)"
+  type        = string
+  default     = "staging"
+}
+
 variable "auth_service_url" {
   description = "URL for Auth Service backend"
   type        = string
