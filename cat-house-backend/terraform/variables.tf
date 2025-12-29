@@ -40,22 +40,9 @@ variable "hosted_zone_id" {
   default     = "Z060186227WPZP8YF5ZX8"
 }
 
-# Sensitive variables - values should be passed from GitHub Secrets during deployment
-# These should NOT have default values to prevent accidental exposure
-variable "database_url" {
-  description = "Neon PostgreSQL database connection string (from GitHub Secrets)"
-  type        = string
-  sensitive   = true
-}
-
-variable "jwt_secret" {
-  description = "JWT secret key for authentication (from GitHub Secrets)"
-  type        = string
-  sensitive   = true
-}
-
-variable "encryption_key" {
-  description = "Encryption key for sensitive data (from GitHub Secrets)"
-  type        = string
-  sensitive   = true
-}
+# Sensitive variables are NOT defined in Terraform to keep credentials out of state files.
+# These are injected during deployment via GitHub Actions workflows using GitHub Secrets:
+#   - DATABASE_URL: Connection string from secrets.NEON_STAGING_DATABASE_URL or NEON_PRODUCTION_DATABASE_URL
+#   - JWT_SECRET: Secret key from secrets.JWT_SECRET  
+#   - ENCRYPTION_KEY: Encryption key from secrets.ENCRYPTION_KEY
+# See .github/workflows/deploy-staging.yml and deploy-production.yml for implementation.

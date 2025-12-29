@@ -61,10 +61,8 @@ resource "aws_cloudfront_distribution" "frontend" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100" # Use only North America and Europe
 
-  # Custom domain alias
-  aliases = var.certificate_arn != "" ? [
-    var.environment == "production" ? "${var.app_prefix}.${var.domain_name}" : "${var.app_prefix}-${var.environment}.${var.domain_name}"
-  ] : []
+  # No custom domain - use CloudFront default domain
+  # Custom domains can be added later with Route53 + ACM certificate
 
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
@@ -114,10 +112,8 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = var.certificate_arn == ""
-    acm_certificate_arn            = var.certificate_arn != "" ? var.certificate_arn : null
-    ssl_support_method             = var.certificate_arn != "" ? "sni-only" : null
-    minimum_protocol_version       = var.certificate_arn != "" ? "TLSv1.2_2021" : "TLSv1"
+    cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1"
   }
 
   tags = {
@@ -139,9 +135,4 @@ output "cloudfront_distribution_id" {
 output "cloudfront_domain_name" {
   description = "CloudFront distribution domain name"
   value       = aws_cloudfront_distribution.frontend.domain_name
-}
-
-output "frontend_url" {
-  description = "Frontend URL"
-  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
 }

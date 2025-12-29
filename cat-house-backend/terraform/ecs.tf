@@ -138,18 +138,6 @@ resource "aws_ecs_task_definition" "services" {
       {
         name  = "PORT"
         value = tostring(each.value.port)
-      },
-      {
-        name  = "DATABASE_URL"
-        value = var.database_url
-      },
-      {
-        name  = "JWT_SECRET"
-        value = var.jwt_secret
-      },
-      {
-        name  = "ENCRYPTION_KEY"
-        value = var.encryption_key
       }
     ]
 
@@ -181,9 +169,12 @@ resource "aws_ecs_task_definition" "services" {
   }
 }
 
-# Note: Environment variables (DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY) are injected
-# during deployment via GitHub Actions using GitHub Secrets. See deployment workflows
-# in .github/workflows/ for how secrets are passed to task definitions.
+# NOTE: Sensitive environment variables are NOT included in task definitions to keep them
+# out of Terraform state. They are injected during deployment via GitHub Actions workflows:
+#   - DATABASE_URL (from secrets.NEON_STAGING_DATABASE_URL or NEON_PRODUCTION_DATABASE_URL)
+#   - JWT_SECRET (from secrets.JWT_SECRET)
+#   - ENCRYPTION_KEY (from secrets.ENCRYPTION_KEY)
+# See .github/workflows/deploy-staging.yml and deploy-production.yml for implementation.
 
 output "ecs_cluster_name" {
   description = "ECS cluster name"

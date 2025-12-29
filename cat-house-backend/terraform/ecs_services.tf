@@ -51,14 +51,6 @@ resource "aws_security_group" "ecs_tasks" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "Health Aggregator"
-    from_port   = 8000
-    to_port     = 8000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   # Allow all outbound traffic (for Neon DB, etc.)
   egress {
     from_port   = 0
@@ -89,17 +81,17 @@ resource "aws_ecs_service" "services" {
     assign_public_ip = true  # Required for Fargate without NAT Gateway
   }
 
-  # Enable service discovery (optional, for inter-service communication)
-  # service_registries {
-  #   registry_arn = aws_service_discovery_service.services[each.key].arn
-  # }
-
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
+  load_balancer {
+    target_group_arn = aws_lb_target_group.services[each.key].arn
+    container_name   = each.key
+    container_port   = each.value.port
   }
 
-  # Health check grace period
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   health_check_grace_period_seconds = 60
 
   # Enable ECS Exec for debugging
@@ -112,7 +104,8 @@ resource "aws_ecs_service" "services" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.ecs_execution_role_policy
+    aws_iam_role_policy_attachment.ecs_execution_role_policy,
+    aws_lb_listener.http
   ]
 }
 

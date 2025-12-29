@@ -5,12 +5,12 @@ resource "aws_ecr_repository" "services" {
     "auth-service",
     "catalog-service",
     "installation-service",
-    "proxy-service",
-    "health-aggregator"
+    "proxy-service"
   ])
 
   name                 = "cat-house/${each.key}"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true # Allow deletion even if contains images
 
   image_scanning_configuration {
     scan_on_push = true
