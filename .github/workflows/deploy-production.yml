@@ -9,7 +9,7 @@ on:
         default: 'latest'
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: sa-east-1
   ENVIRONMENT: production
   CLUSTER_NAME: cat-house-production
 

@@ -108,11 +108,11 @@ pip install -r requirements.txt
 python -m app.main
 ```
 
-Service will be available at http://localhost:8000
+Service will be available at http://localhost:8006
 
 ## Docker
 
 ```bash
 docker build -t cathouse-health .
-docker run -p 8000:8000 cathouse-health
+docker run -p 8006:8006 cathouse-health
 ```

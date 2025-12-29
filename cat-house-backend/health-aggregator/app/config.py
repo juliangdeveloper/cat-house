@@ -11,6 +11,6 @@ class Settings(BaseSettings):
     # Service configuration
     service_name: str = "Health Aggregator"
     environment: str = "development"
-    port: int = 8000
+    port: int = 8006
 
 settings = Settings()

@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
-  default     = "us-east-1"
+  default     = "sa-east-1"
 }
 
 variable "environment" {
@@ -36,7 +36,25 @@ variable "health_aggregator_url" {
 }
 
 variable "certificate_arn" {
-  description = "ARN of ACM certificate for custom domain (optional)"
+  description = "ARN of ACM certificate for custom domain"
   type        = string
-  default     = ""
+  default     = "arn:aws:acm:us-east-1:578492750346:certificate/25745008-889d-4163-bba2-d71065c1b353"
+}
+
+variable "domain_name" {
+  description = "Base domain name"
+  type        = string
+  default     = "gamificator.click"
+}
+
+variable "app_prefix" {
+  description = "Prefix for this application (e.g., cathouse)"
+  type        = string
+  default     = "cathouse"
+}
+
+variable "hosted_zone_id" {
+  description = "Route 53 Hosted Zone ID for the domain"
+  type        = string
+  default     = "Z060186227WPZP8YF5ZX8"
 }

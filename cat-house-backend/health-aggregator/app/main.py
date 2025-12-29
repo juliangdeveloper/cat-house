@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Health Aggregator Service")
     logger.info("Environment: development")
-    logger.info("Service port: 8000")
+    logger.info("Service port: 8006")
     yield
     # Shutdown
     logger.info("Shutting down Health Aggregator Service")
@@ -164,4 +164,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8006)

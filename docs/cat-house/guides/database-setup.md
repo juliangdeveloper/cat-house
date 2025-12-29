@@ -4,6 +4,18 @@
 
 Cat House uses Neon PostgreSQL as the serverless database backend. This guide covers setup for all environments.
 
+**Project Details:**
+- **Project Name:** cat-house
+- **Project ID:** royal-king-27503715
+- **Region:** AWS São Paulo (sa-east-1)
+- **Postgres Version:** 17
+
+**Branches:**
+- `production` - Main production database
+- `staging` - Staging environment for testing
+- `development` - Development branch for local testing
+- `test` - CI/CD testing branch
+
 ## Quick Start
 
 ### Development (Neon by default)
@@ -33,23 +45,34 @@ Cat House uses Neon PostgreSQL as the serverless database backend. This guide co
 
 ### Production (Neon PostgreSQL)
 
-1. **Create Neon Project:**
-   - Sign up at https://neon.tech
-   - Create project: "cat-house-prod"
-   - Region: Select closest to your users
-   - Note both connection strings (pooler + direct)
+**Connection Strings for cat-house project:**
 
-2. **Get Connection Strings:**
-   
-   **Pooler (for application runtime, async):**
-   ```
-   postgresql+asyncpg://user:pass@ep-xxx-pooler.region.aws.neon.tech/cathouse?sslmode=require
-   ```
-   
-   **Direct (for migrations, sync):**
-   ```
-   postgresql://user:pass@ep-xxx.region.aws.neon.tech/cathouse?sslmode=require
-   ```
+**Test Branch (for CI/CD):**
+```
+# Pooled (runtime with asyncpg)
+postgresql+asyncpg://neondb_owner:npg_YkeJrUi0tf7E@ep-long-poetry-ach6uuxn-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
+
+# Direct (migrations with psycopg2)
+postgresql://neondb_owner:npg_YkeJrUi0tf7E@ep-long-poetry-ach6uuxn.sa-east-1.aws.neon.tech/neondb?sslmode=require
+```
+
+**Staging Branch:**
+```
+# Pooled (runtime with asyncpg)
+postgresql+asyncpg://neondb_owner:npg_YkeJrUi0tf7E@ep-withered-river-aci39v6t-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
+
+# Direct (migrations with psycopg2)
+postgresql://neondb_owner:npg_YkeJrUi0tf7E@ep-withered-river-aci39v6t.sa-east-1.aws.neon.tech/neondb?sslmode=require
+```
+
+**Production Branch:**
+```
+# Pooled (runtime with asyncpg)
+postgresql+asyncpg://neondb_owner:npg_YkeJrUi0tf7E@ep-jolly-art-accpsvnx-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
+
+# Direct (migrations with psycopg2)
+postgresql://neondb_owner:npg_YkeJrUi0tf7E@ep-jolly-art-accpsvnx.sa-east-1.aws.neon.tech/neondb?sslmode=require
+```
 
 ## Database Schema Setup
 

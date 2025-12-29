@@ -78,7 +78,7 @@ services:
       dockerfile: Dockerfile
     container_name: cathouse-health
     ports:
-      - "8000:8000"
+      - "8006:8006"
     networks:
       - cathouse-network
     depends_on:
