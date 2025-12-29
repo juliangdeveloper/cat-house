@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service, catalog-service, installation-service, proxy-service, health-aggregator]
+        service: [auth-service, catalog-service, installation-service, proxy-service]
     
     steps:
     - uses: actions/checkout@v4

@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service, catalog-service, installation-service, proxy-service, health-aggregator]
+        service: [auth-service, catalog-service, installation-service, proxy-service]
     
     steps:
     - uses: actions/checkout@v4
@@ -80,12 +80,8 @@ jobs:
         # Extract service name without -service suffix for health endpoint
         SERVICE_NAME=$(echo "${{ matrix.service }}" | sed 's/-service$//')
         
-        # Health aggregator has different endpoint
-        if [ "${{ matrix.service }}" == "health-aggregator" ]; then
-          HEALTH_URL="https://api-staging.gamificator.click/api/v1/health"
-        else
-          HEALTH_URL="https://api-staging.gamificator.click/api/v1/${SERVICE_NAME}/health"
-        fi
+        # All services use the same health endpoint pattern
+        HEALTH_URL="http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
         
         echo "Health check URL: $HEALTH_URL"
         echo "Would verify health at: $HEALTH_URL"
