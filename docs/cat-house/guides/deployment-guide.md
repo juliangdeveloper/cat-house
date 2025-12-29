@@ -44,14 +44,34 @@ Navigate to: https://github.com/juliangdeveloper/cat-house/settings/secrets/acti
 
 **Current Secrets:**
 ```
+# AWS Access
 ✅ AWS_ACCESS_KEY_ID              (from AWS IAM)
 ✅ AWS_SECRET_ACCESS_KEY          (from AWS IAM)
-✅ NEON_TEST_DATABASE_URL         (from Neon development branch)
-✅ NEON_STAGING_DATABASE_URL      (from Neon staging branch)
-✅ NEON_PRODUCTION_DATABASE_URL   (from Neon main branch)
+
+# Database URLs (from Neon)
+✅ NEON_TEST_DATABASE_URL         (development branch - for CI tests)
+✅ NEON_STAGING_DATABASE_URL      (staging branch - for staging deploy)
+✅ NEON_PRODUCTION_DATABASE_URL   (main branch - for production deploy)
+
+# Application Secrets
+⚠️ JWT_SECRET                     (generate with: openssl rand -base64 32)
+⚠️ ENCRYPTION_KEY                 (generate with: openssl rand -hex 32)
+
+# CloudFront (added after Terraform)
 ⏳ CLOUDFRONT_STAGING_ID          (will be added after Terraform)
 ⏳ CLOUDFRONT_PRODUCTION_ID       (will be added after Terraform)
 ```
+
+**Generate Secure Secrets:**
+```powershell
+# Generate JWT_SECRET (minimum 32 characters)
+openssl rand -base64 32
+
+# Generate ENCRYPTION_KEY (exactly 32 characters)
+openssl rand -hex 16
+```
+
+Add these to GitHub Secrets before first deployment.
 
 ### 2. GitHub Environments ✅
 
@@ -80,32 +100,16 @@ aws configure
 # - Default output: json
 ```
 
-### 2. Create Database Secret in AWS Secrets Manager
-
-**For Staging:**
-```powershell
-aws secretsmanager create-secret `
-  --name "cat-house/staging/database-url" `
-  --description "Neon PostgreSQL URL for staging environment" `
-  --secret-string "postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require" `
-  --region us-east-1
-```
-
-**For Production:**
-```powershell
-aws secretsmanager create-secret `
-  --name "cat-house/production/database-url" `
-  --description "Neon PostgreSQL URL for production environment" `
-  --secret-string "postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require" `
-  --region us-east-1
-```
-
-### 3. Verify Secret Creation
+### 2. Verify AWS Access
 
 ```powershell
-aws secretsmanager describe-secret --secret-id cat-house/staging/database-url
-aws secretsmanager describe-secret --secret-id cat-house/production/database-url
+# Verify credentials
+aws sts get-caller-identity
+
+# Should output your AWS account ID and IAM user
 ```
+
+**Note:** Database credentials, JWT secrets, and encryption keys are managed via GitHub Secrets and injected during deployment. No AWS Secrets Manager configuration required.
 
 ---
 

@@ -19,8 +19,7 @@ resource "aws_cloudwatch_log_group" "services" {
     "auth-service",
     "catalog-service",
     "installation-service",
-    "proxy-service",
-    "health-aggregator"
+    "proxy-service"
   ])
 
   name              = "/ecs/cat-house/${var.environment}/${each.key}"
@@ -57,25 +56,6 @@ resource "aws_iam_role" "ecs_execution_role" {
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
   role       = aws_iam_role.ecs_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# Allow reading secrets from Secrets Manager
-resource "aws_iam_role_policy" "ecs_execution_secrets" {
-  name = "ecs-execution-secrets"
-  role = aws_iam_role.ecs_execution_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "secretsmanager:GetSecretValue"
-      ]
-      Resource = [
-        aws_secretsmanager_secret.database_url.arn
-      ]
-    }]
-  })
 }
 
 # ECS Task Role (for application permissions)
@@ -122,11 +102,6 @@ locals {
       cpu    = 256
       memory = 512
     }
-    health-aggregator = {
-      port   = 8000
-      cpu    = 256
-      memory = 512
-    }
   }
 }
 
@@ -163,13 +138,18 @@ resource "aws_ecs_task_definition" "services" {
       {
         name  = "PORT"
         value = tostring(each.value.port)
-      }
-    ]
-
-    secrets = [
+      },
       {
-        name      = "DATABASE_URL"
-        valueFrom = aws_secretsmanager_secret.database_url.arn
+        name  = "DATABASE_URL"
+        value = var.database_url
+      },
+      {
+        name  = "JWT_SECRET"
+        value = var.jwt_secret
+      },
+      {
+        name  = "ENCRYPTION_KEY"
+        value = var.encryption_key
       }
     ]
 
@@ -185,9 +165,7 @@ resource "aws_ecs_task_definition" "services" {
     healthCheck = {
       command = [
         "CMD-SHELL",
-        each.key == "health-aggregator" ? 
-          "curl -f http://localhost:${each.value.port}/health || exit 1" :
-          "curl -f http://localhost:${each.value.port}/api/v1/health || exit 1"
+        "curl -f http://localhost:${each.value.port}/api/v1/health || exit 1"
       ]
       interval    = 30
       timeout     = 5
@@ -203,19 +181,9 @@ resource "aws_ecs_task_definition" "services" {
   }
 }
 
-# Secrets Manager for database URL
-resource "aws_secretsmanager_secret" "database_url" {
-  name        = "cat-house/${var.environment}/database-url"
-  description = "Neon PostgreSQL database URL for ${var.environment}"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
-}
-
-# Note: The actual secret value must be set manually or via separate process
-# to avoid storing credentials in Terraform state
+# Note: Environment variables (DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY) are injected
+# during deployment via GitHub Actions using GitHub Secrets. See deployment workflows
+# in .github/workflows/ for how secrets are passed to task definitions.
 
 output "ecs_cluster_name" {
   description = "ECS cluster name"

@@ -10,33 +10,14 @@ variable "environment" {
   default     = "staging"
 }
 
-variable "auth_service_url" {
-  description = "URL for Auth Service backend"
-  type        = string
-}
-
-variable "catalog_service_url" {
-  description = "URL for Catalog Service backend"
-  type        = string
-}
-
-variable "installation_service_url" {
-  description = "URL for Installation Service backend"
-  type        = string
-}
-
-variable "proxy_service_url" {
-  description = "URL for Proxy Service backend"
-  type        = string
-}
-
-variable "health_aggregator_url" {
-  description = "URL for Health Aggregator Service"
-  type        = string
-}
-
 variable "certificate_arn" {
-  description = "ARN of ACM certificate for custom domain"
+  description = "ARN of ACM certificate for API Gateway (sa-east-1)"
+  type        = string
+  default     = "arn:aws:acm:sa-east-1:578492750346:certificate/9ec24c1d-36cb-46a2-92d0-195b8f2afc53"
+}
+
+variable "certificate_arn_cloudfront" {
+  description = "ARN of ACM certificate for CloudFront (us-east-1)"
   type        = string
   default     = "arn:aws:acm:us-east-1:578492750346:certificate/25745008-889d-4163-bba2-d71065c1b353"
 }
@@ -57,4 +38,24 @@ variable "hosted_zone_id" {
   description = "Route 53 Hosted Zone ID for the domain"
   type        = string
   default     = "Z060186227WPZP8YF5ZX8"
+}
+
+# Sensitive variables - values should be passed from GitHub Secrets during deployment
+# These should NOT have default values to prevent accidental exposure
+variable "database_url" {
+  description = "Neon PostgreSQL database connection string (from GitHub Secrets)"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_secret" {
+  description = "JWT secret key for authentication (from GitHub Secrets)"
+  type        = string
+  sensitive   = true
+}
+
+variable "encryption_key" {
+  description = "Encryption key for sensitive data (from GitHub Secrets)"
+  type        = string
+  sensitive   = true
 }

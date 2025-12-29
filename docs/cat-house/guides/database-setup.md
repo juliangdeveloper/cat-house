@@ -96,8 +96,8 @@ This totals 10 connections. See complete pooling guidance in the Neon best pract
 
 - [ ] Never commit .env files to git
 - [ ] Use ?sslmode=require in production
-- [ ] Store credentials in secrets manager
-- [ ] Rotate passwords regularly
+- [ ] Store credentials in GitHub Secrets (see CONFIGURATION-GUIDE.md)
+- [ ] Rotate passwords regularly and update GitHub Secrets
 - [ ] Enable Neon IP allowlist (if available)
 
 ## Resources

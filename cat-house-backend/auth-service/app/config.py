@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     max_overflow: int = 1
     
     # Authentication
-    jwt_secret: str = "changeme"
+    # SECURITY: No default value - must be set via environment variable
+    # Generate with: openssl rand -base64 32
+    jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
     

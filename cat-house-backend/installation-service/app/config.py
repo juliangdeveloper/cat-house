@@ -27,7 +27,17 @@ class Settings(BaseSettings):
     allowed_origins: List[str] = ["https://app.gamificator.click"]
     
     # Encryption
-    encryption_key: str = "changeme-32-characters-long!!"
+    # SECURITY: No default value - must be set via environment variable
+    # Generate with: openssl rand -hex 32 (must be exactly 32 characters)
+    encryption_key: str
+    
+    @field_validator('encryption_key')
+    @classmethod
+    def validate_encryption_key(cls, v: str) -> str:
+        """Validate encryption key length."""
+        if len(v) != 32:
+            raise ValueError('Encryption key must be exactly 32 characters')
+        return v
     
     @field_validator('database_url')
     @classmethod
