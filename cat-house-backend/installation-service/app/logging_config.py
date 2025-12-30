@@ -2,10 +2,12 @@
 Production-ready logging configuration with structured JSON logging for CloudWatch.
 """
 
-from loguru import logger
-import sys
 import json
+import sys
 from contextvars import ContextVar
+
+from loguru import logger
+
 from app.config import settings
 
 # Context variable for trace ID (correlation ID)
@@ -43,7 +45,12 @@ def setup_logging():
         logger.add(
             sys.stdout,
             level="DEBUG",
-            format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>",
+            format=(
+                "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+                "<level>{level: <8}</level> | "
+                "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+                "<level>{message}</level>"
+            ),
             colorize=True,
         )
     else:

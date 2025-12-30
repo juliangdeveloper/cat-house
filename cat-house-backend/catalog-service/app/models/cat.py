@@ -4,11 +4,12 @@ Owner: catalog-service
 Purpose: Cat definition, versioning, and publication status
 """
 
-from typing import Optional
-from sqlalchemy import String, Text, ForeignKey, Index
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from typing import Optional
+
+from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, BaseModel
 

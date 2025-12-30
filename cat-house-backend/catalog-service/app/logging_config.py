@@ -2,10 +2,12 @@
 Production-ready logging configuration with structured JSON logging for CloudWatch.
 """
 
-from loguru import logger
-import sys
 import json
+import sys
 from contextvars import ContextVar
+
+from loguru import logger
+
 from app.config import settings
 
 # Context variable for trace ID (correlation ID)

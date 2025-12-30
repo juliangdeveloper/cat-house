@@ -11,12 +11,11 @@ Connection Allocation (auth-service):
 
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from .config import settings
-
 
 # Runtime async engine (for application use)
 engine = create_async_engine(

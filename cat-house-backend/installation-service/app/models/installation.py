@@ -4,12 +4,13 @@ Owner: installation-service
 Purpose: Track user's installed cats with configuration and status
 """
 
-from typing import Optional
-from sqlalchemy import String, DateTime, ForeignKey, Index, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import DateTime, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, BaseModel
 
@@ -81,4 +82,7 @@ class Installation(Base, BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<Installation(id={self.id}, user_id={self.user_id}, cat_id={self.cat_id}, status={self.status})>"
+        return (
+            f"<Installation(id={self.id}, user_id={self.user_id}, "
+            f"cat_id={self.cat_id}, status={self.status})>"
+        )

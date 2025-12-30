@@ -2,9 +2,11 @@
 Correlation ID middleware for distributed tracing across microservices.
 """
 
-from fastapi import Request
-from uuid import uuid4
 import time
+from uuid import uuid4
+
+from fastapi import Request
+
 from app.logging_config import logger, trace_id_var
 
 

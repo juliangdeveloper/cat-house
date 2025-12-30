@@ -4,14 +4,14 @@ This module defines the base classes used by all models across all services.
 Following Neon AI Rules best practices for serverless PostgreSQL.
 """
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any
-import uuid
 
 from sqlalchemy import DateTime
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -20,8 +20,6 @@ class Base(AsyncAttrs, DeclarativeBase):
     This base class enables async operations with SQLAlchemy 2.0+
     and provides the foundation for all models in the shared database.
     """
-
-    pass
 
 
 class BaseModel:

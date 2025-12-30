@@ -1,11 +1,12 @@
 ﻿from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import health
 from app.logging_config import logger, setup_logging
 from app.middleware import correlation_id_middleware
+from app.routers import health
 
 # Setup logging on startup
 setup_logging()

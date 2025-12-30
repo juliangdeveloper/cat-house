@@ -4,12 +4,13 @@ Owner: installation-service
 Purpose: Track which permissions have been granted for each installation
 """
 
-from typing import Optional
-from sqlalchemy import Boolean, DateTime, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 
@@ -61,4 +62,7 @@ class InstallationPermission(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<InstallationPermission(installation_id={self.installation_id}, permission_id={self.permission_id}, granted={self.granted})>"
+        return (
+            f"<InstallationPermission(installation_id={self.installation_id}, "
+            f"permission_id={self.permission_id}, granted={self.granted})>"
+        )
