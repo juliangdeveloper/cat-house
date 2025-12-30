@@ -2,7 +2,7 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, develop ]
     paths:
       - 'cat-house-backend/**'
   workflow_dispatch:
