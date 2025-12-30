@@ -1,10 +1,11 @@
 name: Build and Push Docker Images
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
     branches: [ develop ]
-    paths:
-      - 'cat-house-backend/**'
   workflow_dispatch:
 
 env:
@@ -14,6 +15,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     strategy:
       matrix:
         service: [auth-service, catalog-service, installation-service, proxy-service]
