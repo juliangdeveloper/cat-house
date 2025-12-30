@@ -78,7 +78,7 @@ resource "aws_ecs_service" "services" {
   network_configuration {
     subnets          = data.aws_subnets.default.ids
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = true  # Required for Fargate without NAT Gateway
+    assign_public_ip = true # Required for Fargate without NAT Gateway
   }
 
   load_balancer {
