@@ -2,6 +2,8 @@
 
 Microservices architecture for the Cat House platform - a marketplace for gamification integrations.
 
+**CI/CD Status:** ✅ Pipeline configured and passing (Dec 29, 2025)
+
 ## Architecture Overview
 
 The Cat House backend consists of four containerized FastAPI microservices:
@@ -446,3 +448,5 @@ Proprietary - Cat House Platform
 
 **Maintained by:** Platform Engineering Team  
 **Last Updated:** December 2025
+#   D o c k e r   i m a g e s   b u i l d   t r i g g e r  
+ 
