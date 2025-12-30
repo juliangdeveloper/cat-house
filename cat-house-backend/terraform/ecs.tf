@@ -119,7 +119,7 @@ resource "aws_ecs_task_definition" "services" {
 
   container_definitions = jsonencode([{
     name  = each.key
-    image = "${aws_ecr_repository.services[each.key].repository_url}:latest"
+    image = "${aws_ecr_repository.services[each.key].repository_url}:${var.environment == "production" ? "production" : "staging"}"
 
     portMappings = [{
       containerPort = each.value.port

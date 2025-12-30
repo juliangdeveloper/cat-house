@@ -2,13 +2,14 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop ]
     paths:
       - 'cat-house-backend/**'
   workflow_dispatch:
 
 env:
   AWS_REGION: sa-east-1
+  IMAGE_TAG: staging
 
 jobs:
   build:
@@ -34,18 +35,17 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
         SERVICE: ${{ matrix.service }}
       run: |
-        echo "Building image for $SERVICE"
+        echo "Building image for $SERVICE from develop branch"
         docker build \
-          -t $ECR_REGISTRY/cat-house/$SERVICE:$IMAGE_TAG \
-          -t $ECR_REGISTRY/cat-house/$SERVICE:latest \
+          -t $ECR_REGISTRY/cat-house/$SERVICE:${{ github.sha }} \
+          -t $ECR_REGISTRY/cat-house/$SERVICE:${{ env.IMAGE_TAG }} \
           -f cat-house-backend/$SERVICE/Dockerfile \
           cat-house-backend/$SERVICE
         
-        echo "Pushing image for $SERVICE"
-        docker push $ECR_REGISTRY/cat-house/$SERVICE:$IMAGE_TAG
-        docker push $ECR_REGISTRY/cat-house/$SERVICE:latest
+        echo "Pushing images for $SERVICE"
+        docker push $ECR_REGISTRY/cat-house/$SERVICE:${{ github.sha }}
+        docker push $ECR_REGISTRY/cat-house/$SERVICE:${{ env.IMAGE_TAG }}
         
-        echo "Successfully pushed $SERVICE image"
+        echo "✅ Successfully pushed $SERVICE:${{ env.IMAGE_TAG }}"

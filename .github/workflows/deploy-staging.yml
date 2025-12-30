@@ -1,19 +1,24 @@
 name: Deploy to Staging
 
 on:
-  push:
-    branches: [ develop ]  # Only trigger on develop branch
+  workflow_run:
+    workflows: ["Build and Push Docker Images"]
+    types:
+      - completed
+    branches: [ develop ]
   workflow_dispatch:
 
 env:
   AWS_REGION: sa-east-1
   ENVIRONMENT: staging
   CLUSTER_NAME: cat-house-staging
+  IMAGE_TAG: staging
 
 jobs:
   # Run database migrations first (auth-service only)
   migrate:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     
     steps:
     - uses: actions/checkout@v4
@@ -62,6 +67,21 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Verify Docker image exists in ECR
+      run: |
+        echo "Verifying that Docker image exists for ${{ matrix.service }}..."
+        
+        if aws ecr describe-images \
+          --repository-name cat-house/${{ matrix.service }} \
+          --image-ids imageTag=${{ env.IMAGE_TAG }} \
+          --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+          echo "✅ Image found: cat-house/${{ matrix.service }}:${{ env.IMAGE_TAG }}"
+        else
+          echo "❌ ERROR: Docker image not found in ECR"
+          echo "Expected image: cat-house/${{ matrix.service }}:${{ env.IMAGE_TAG }}"
+          exit 1
+        fi
     
     - name: Get current task definition
       id: get-task-def
@@ -179,7 +199,7 @@ jobs:
     - name: Sync to S3
       run: |
         echo "Syncing frontend to S3..."
-        aws s3 sync frontend/dist/web/ s3://cat-house-frontend-staging --delete
+        aws s3 sync frontend/dist/ s3://cat-house-frontend-staging --delete
         echo "Frontend synced to S3"
     
     - name: Invalidate CloudFront cache
