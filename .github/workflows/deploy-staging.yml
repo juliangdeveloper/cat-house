@@ -2,7 +2,7 @@ name: Deploy to Staging
 
 on:
   push:
-    branches: [ develop, master ]
+    branches: [ develop ]  # Only trigger on develop branch
   workflow_dispatch:
 
 env:
@@ -131,18 +131,21 @@ jobs:
         HEALTH_URL="http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
         
         echo "Health check URL: $HEALTH_URL"
+        echo "Waiting for service to be fully operational..."
         
-        # Retry health check up to 5 times
-        for i in {1..5}; do
-          if curl -f -s "$HEALTH_URL"; then
-            echo "Health check passed for ${{ matrix.service }}"
+        # Retry health check up to 10 times with 15 second intervals
+        for i in {1..10}; do
+          echo "Attempt $i/10..."
+          if curl -f -s "$HEALTH_URL" --connect-timeout 5 --max-time 10; then
+            echo "✅ Health check passed for ${{ matrix.service }}"
             exit 0
           fi
-          echo "Health check failed, retrying ($i/5)..."
-          sleep 10
+          echo "Health check failed, retrying in 15s..."
+          sleep 15
         done
         
-        echo "Health check failed after 5 attempts"
+        echo "❌ Health check failed after 10 attempts (2.5 minutes)"
+        echo "Service may need more time to initialize or check CloudWatch logs for errors"
         exit 1
 
   # Deploy frontend
