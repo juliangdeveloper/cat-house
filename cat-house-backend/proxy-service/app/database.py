@@ -3,12 +3,12 @@
 Connection Allocation (proxy-service):
 - pool_size=1, max_overflow=0 (max 1 connection, read-only)
 """
+
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from .config import settings
-
 
 # Runtime async engine (smaller pool for proxy)
 engine = create_async_engine(
@@ -26,7 +26,7 @@ engine = create_async_engine(
             "jit": "off",
         },
         "command_timeout": 60,
-    }
+    },
 )
 
 # Async session factory

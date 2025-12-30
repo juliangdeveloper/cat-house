@@ -1,0 +1,58 @@
+name: Retag Images for Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: sa-east-1
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [auth-service, catalog-service, installation-service, proxy-service]
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Retag staging image as production
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        SERVICE: ${{ matrix.service }}
+        REPO: cat-house/${{ matrix.service }}
+      run: |
+        echo "Retagging $SERVICE from staging to production..."
+        
+        # Get the manifest for the staging image
+        MANIFEST=$(aws ecr batch-get-image \
+          --repository-name $REPO \
+          --image-ids imageTag=staging \
+          --query 'images[].imageManifest' \
+          --output text)
+        
+        if [ -z "$MANIFEST" ]; then
+          echo "❌ ERROR: staging image not found for $SERVICE"
+          echo "Please ensure 'Build and Push Docker Images' workflow has completed successfully"
+          exit 1
+        fi
+        
+        # Tag the same image as production (no rebuild, just metadata)
+        aws ecr put-image \
+          --repository-name $REPO \
+          --image-tag production \
+          --image-manifest "$MANIFEST"
+        
+        echo "✅ Successfully retagged $SERVICE:staging as $SERVICE:production"
+        echo "This is the EXACT same image tested in staging"

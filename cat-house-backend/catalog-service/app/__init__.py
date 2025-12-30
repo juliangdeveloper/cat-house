@@ -1,1 +1,1 @@
-﻿
+﻿# catalog-service Package

@@ -1,14 +1,18 @@
-﻿from contextlib import asynccontextmanager
+﻿"""Auth Service - Main application entry point."""
+
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import health
 from app.logging_config import logger, setup_logging
 from app.middleware import correlation_id_middleware
+from app.routers import health
 
 # Setup logging on startup
 setup_logging()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +23,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     logger.info(f"Shutting down {settings.service_name}")
+
 
 app = FastAPI(
     title=settings.service_name,
@@ -46,9 +51,7 @@ app.include_router(health.router, prefix="/api/v1", tags=["health"])
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=settings.port,
-        reload=settings.debug
+        "app.main:app", host="0.0.0.0", port=settings.port, reload=settings.debug
     )
