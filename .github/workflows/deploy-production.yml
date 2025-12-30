@@ -14,12 +14,45 @@ env:
   CLUSTER_NAME: cat-house-production
 
 jobs:
-  # Production deployment requires manual approval
-  deploy:
+  # Run database migrations first
+  migrate:
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://gamificator.click
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.version }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Run database migrations
+      env:
+        DATABASE_URL: ${{ secrets.NEON_PRODUCTION_DATABASE_URL }}
+      working-directory: cat-house-backend/auth-service
+      run: |
+        echo "Running database migrations for production..."
+        echo "Version: ${{ github.event.inputs.version }}"
+        
+        pip install -r requirements.txt alembic
+        alembic upgrade head
+        
+        echo "Production migrations completed successfully"
+  
+  # Deploy all backend services
+  deploy-backend:
+    needs: migrate
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    strategy:
+      matrix:
+        service: [auth-service, catalog-service, installation-service, proxy-service]
     
     steps:
     - uses: actions/checkout@v4
@@ -33,29 +66,130 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
     
-    - name: Run database migrations
+    - name: Get current task definition
+      id: get-task-def
       run: |
-        echo "Running database migrations for production..."
-        echo "Version: ${{ github.event.inputs.version }}"
-        # Production migration logic here
+        echo "Fetching current task definition for ${{ matrix.service }}..."
+        aws ecs describe-task-definition \
+          --task-definition cat-house-production-${{ matrix.service }} \
+          --query 'taskDefinition' > task-def.json
     
-    - name: Deploy backend services
+    - name: Inject secrets and register new task definition
+      id: register-task-def
+      env:
+        DATABASE_URL: ${{ secrets.NEON_PRODUCTION_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
       run: |
-        echo "Deploying backend services to production..."
-        for service in auth-service catalog-service installation-service proxy-service; do
-          echo "Deploying $service..."
-          # aws ecs update-service \
-          #   --cluster ${{ env.CLUSTER_NAME }} \
-          #   --service cat-house-production-$service \
-          #   --force-new-deployment
+        echo "Injecting secrets into task definition..."
+        
+        # Add environment variables to task definition
+        jq --arg db_url "$DATABASE_URL" \
+           --arg jwt_secret "$JWT_SECRET" \
+           --arg enc_key "$ENCRYPTION_KEY" \
+           '.containerDefinitions[0].environment += [
+             {"name":"DATABASE_URL","value":$db_url},
+             {"name":"JWT_SECRET","value":$jwt_secret},
+             {"name":"ENCRYPTION_KEY","value":$enc_key}
+           ] | del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)' \
+           task-def.json > new-task-def.json
+        
+        # Register new task definition
+        NEW_TASK_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://new-task-def.json \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        
+        echo "task_arn=$NEW_TASK_ARN" >> $GITHUB_OUTPUT
+        echo "Registered new task definition: $NEW_TASK_ARN"
+    
+    - name: Update ECS service
+      run: |
+        echo "Deploying ${{ matrix.service }} to production..."
+        
+        aws ecs update-service \
+          --cluster ${{ env.CLUSTER_NAME }} \
+          --service cat-house-production-${{ matrix.service }} \
+          --task-definition ${{ steps.register-task-def.outputs.task_arn }} \
+          --force-new-deployment
+        
+        echo "Service ${{ matrix.service }} deployment initiated"
+    
+    - name: Wait for service stability
+      run: |
+        echo "Waiting for ${{ matrix.service }} to become stable..."
+        
+        aws ecs wait services-stable \
+          --cluster ${{ env.CLUSTER_NAME }} \
+          --services cat-house-production-${{ matrix.service }}
+        
+        echo "Service ${{ matrix.service }} is stable"
+    
+    - name: Verify health check
+      run: |
+        # Extract service name without -service suffix for health endpoint
+        SERVICE_NAME=$(echo "${{ matrix.service }}" | sed 's/-service$//')
+        
+        # Production ALB health endpoint (update URL when available)
+        HEALTH_URL="http://cat-house-production-alb.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
+        
+        echo "Health check URL: $HEALTH_URL"
+        
+        # Retry health check up to 5 times
+        for i in {1..5}; do
+          if curl -f -s "$HEALTH_URL"; then
+            echo "Health check passed for ${{ matrix.service }}"
+            exit 0
+          fi
+          echo "Health check failed, retrying ($i/5)..."
+          sleep 10
         done
+        
+        echo "Health check failed after 5 attempts"
+        exit 1
+  
+  # Deploy frontend
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    environment:
+      name: production
     
-    - name: Deploy frontend
-      run: |
-        echo "Deploying frontend to production..."
-        # Build and deploy frontend
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.version }}
     
-    - name: Verify deployment
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Build frontend static export
+      working-directory: frontend
+      env:
+        EXPO_PUBLIC_API_URL: https://api.gamificator.click
       run: |
-        echo "Verifying production deployment..."
-        echo "All services deployed successfully"
+        npm install --legacy-peer-deps
+        npx expo export --platform web
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Sync to S3
+      run: |
+        echo "Syncing frontend to S3..."
+        aws s3 sync frontend/dist/web/ s3://cat-house-frontend-production --delete
+        echo "Frontend synced to S3"
+    
+    - name: Invalidate CloudFront cache
+      run: |
+        echo "Invalidating CloudFront cache..."
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_PRODUCTION_ID }} \
+          --paths "/*"
+        echo "CloudFront cache invalidated"

@@ -25,15 +25,22 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
     
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
     - name: Run database migrations
+      env:
+        DATABASE_URL: ${{ secrets.NEON_STAGING_DATABASE_URL }}
+      working-directory: cat-house-backend/auth-service
       run: |
-        echo "Running database migrations via ECS task..."
+        echo "Running database migrations via GitHub Actions..."
         
-        # Note: This requires a migration task definition to be created
-        # For now, we'll skip actual migration and just log
-        echo "Migration task would run here"
-        echo "Task: cat-house-staging-migration"
-        echo "Command: alembic upgrade head"
+        pip install -r requirements.txt alembic
+        alembic upgrade head
+        
+        echo "Migrations completed successfully"
 
   # Deploy all backend services
   deploy-backend:
@@ -53,15 +60,52 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
     
-    - name: Force new deployment for ${{ matrix.service }}
+    - name: Get current task definition
+      id: get-task-def
+      run: |
+        echo "Fetching current task definition for ${{ matrix.service }}..."
+        aws ecs describe-task-definition \
+          --task-definition cat-house-staging-${{ matrix.service }} \
+          --query 'taskDefinition' > task-def.json
+    
+    - name: Inject secrets and register new task definition
+      id: register-task-def
+      env:
+        DATABASE_URL: ${{ secrets.NEON_STAGING_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      run: |
+        echo "Injecting secrets into task definition..."
+        
+        # Add environment variables to task definition
+        jq --arg db_url "$DATABASE_URL" \
+           --arg jwt_secret "$JWT_SECRET" \
+           --arg enc_key "$ENCRYPTION_KEY" \
+           '.containerDefinitions[0].environment += [
+             {"name":"DATABASE_URL","value":$db_url},
+             {"name":"JWT_SECRET","value":$jwt_secret},
+             {"name":"ENCRYPTION_KEY","value":$enc_key}
+           ] | del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)' \
+           task-def.json > new-task-def.json
+        
+        # Register new task definition
+        NEW_TASK_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://new-task-def.json \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        
+        echo "task_arn=$NEW_TASK_ARN" >> $GITHUB_OUTPUT
+        echo "Registered new task definition: $NEW_TASK_ARN"
+    
+    - name: Update ECS service
       run: |
         echo "Deploying ${{ matrix.service }} to staging..."
         
-        # Update ECS service to force new deployment
-        # aws ecs update-service \
-        #   --cluster ${{ env.CLUSTER_NAME }} \
-        #   --service cat-house-staging-${{ matrix.service }} \
-        #   --force-new-deployment
+        aws ecs update-service \
+          --cluster ${{ env.CLUSTER_NAME }} \
+          --service cat-house-staging-${{ matrix.service }} \
+          --task-definition ${{ steps.register-task-def.outputs.task_arn }} \
+          --force-new-deployment
         
         echo "Service ${{ matrix.service }} deployment initiated"
     
@@ -69,9 +113,9 @@ jobs:
       run: |
         echo "Waiting for ${{ matrix.service }} to become stable..."
         
-        # aws ecs wait services-stable \
-        #   --cluster ${{ env.CLUSTER_NAME }} \
-        #   --services cat-house-staging-${{ matrix.service }}
+        aws ecs wait services-stable \
+          --cluster ${{ env.CLUSTER_NAME }} \
+          --services cat-house-staging-${{ matrix.service }}
         
         echo "Service ${{ matrix.service }} is stable"
     
@@ -84,17 +128,19 @@ jobs:
         HEALTH_URL="http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
         
         echo "Health check URL: $HEALTH_URL"
-        echo "Would verify health at: $HEALTH_URL"
         
         # Retry health check up to 5 times
-        # for i in {1..5}; do
-        #   if curl -f -s "$HEALTH_URL"; then
-        #     echo "Health check passed"
-        #     exit 0
-        #   fi
-        #   echo "Health check failed, retrying ($i/5)..."
-        #   sleep 10
-        # done
+        for i in {1..5}; do
+          if curl -f -s "$HEALTH_URL"; then
+            echo "Health check passed for ${{ matrix.service }}"
+            exit 0
+          fi
+          echo "Health check failed, retrying ($i/5)..."
+          sleep 10
+        done
+        
+        echo "Health check failed after 5 attempts"
+        exit 1
 
   # Deploy frontend
   deploy-frontend:
@@ -127,13 +173,13 @@ jobs:
     - name: Sync to S3
       run: |
         echo "Syncing frontend to S3..."
-        # aws s3 sync frontend/dist/ s3://cat-house-frontend-staging --delete
+        aws s3 sync frontend/dist/web/ s3://cat-house-frontend-staging --delete
         echo "Frontend synced to S3"
     
     - name: Invalidate CloudFront cache
       run: |
         echo "Invalidating CloudFront cache..."
-        # aws cloudfront create-invalidation \
-        #   --distribution-id ${{ secrets.CLOUDFRONT_STAGING_ID }} \
-        #   --paths "/*"
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_STAGING_ID }} \
+          --paths "/*"
         echo "CloudFront cache invalidated"
