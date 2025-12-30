@@ -33,6 +33,9 @@ jobs:
     - name: Run database migrations
       env:
         DATABASE_URL: ${{ secrets.NEON_STAGING_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+        ENVIRONMENT: staging
       working-directory: cat-house-backend/auth-service
       run: |
         echo "Running database migrations via GitHub Actions..."
