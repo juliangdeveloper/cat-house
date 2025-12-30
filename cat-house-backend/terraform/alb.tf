@@ -215,7 +215,7 @@ resource "aws_lb_listener_rule" "health" {
     fixed_response {
       content_type = "application/json"
       message_body = jsonencode({
-        status = "healthy"
+        status  = "healthy"
         message = "ALB is operational. Check individual service health endpoints."
       })
       status_code = "200"

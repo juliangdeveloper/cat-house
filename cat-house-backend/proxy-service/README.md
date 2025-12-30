@@ -12,7 +12,7 @@ Request mediation and validation service for Cat House platform.
 ## API Endpoints
 
 ### Health Check
-- `GET /api/v1/health` - Service health status
+- `GET /api/v1/proxy/health` - Service health status
 
 ### Proxy (To be implemented)
 - `POST /api/v1/proxy/{catId}/action` - Proxy request to cat service

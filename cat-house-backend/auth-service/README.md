@@ -12,7 +12,7 @@ Authentication and authorization service for Cat House platform.
 ## API Endpoints
 
 ### Health Check
-- `GET /api/v1/health` - Service health status
+- `GET /api/v1/auth/health` - Service health status
 
 ### Authentication (To be implemented)
 - `POST /api/v1/auth/register` - Register new user

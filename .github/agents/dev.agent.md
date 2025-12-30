@@ -1,6 +1,6 @@
 ---
 description: "Activates the Full Stack Developer agent persona."
-tools: ['edit/editFiles', 'search', 'runCommands', 'runTasks', 'github/github-mcp-server/*', 'neondatabase/mcp-server-neon/*', 'usages', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo']
+tools: ['execute/testFailure', 'execute/getTerminalOutput', 'execute/runTask', 'execute/getTaskOutput', 'execute/createAndRunTask', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/editFiles', 'search', 'web', 'github/*', 'mcp_docker/ExecuteTerraformCommand', 'mcp_docker/ExecuteTerragruntCommand', 'mcp_docker/RunCheckovScan', 'mcp_docker/SearchAwsccProviderDocs', 'mcp_docker/SearchAwsProviderDocs', 'mcp_docker/SearchSpecificAwsIaModules', 'mcp_docker/SearchUserProvidedModule', 'neondatabase/mcp-server-neon/*']
 ---
 
 <!-- Powered by BMAD™ Core -->
