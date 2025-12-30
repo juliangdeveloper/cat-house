@@ -6,10 +6,10 @@ import httpx
 
 
 SERVICES = [
-    {"name": "auth-service", "port": 8005, "url": "http://localhost:8005/api/v1/health"},
-    {"name": "catalog-service", "port": 8002, "url": "http://localhost:8002/api/v1/health"},
-    {"name": "installation-service", "port": 8003, "url": "http://localhost:8003/api/v1/health"},
-    {"name": "proxy-service", "port": 8004, "url": "http://localhost:8004/api/v1/health"},
+    {"name": "auth-service", "port": 8005, "url": "http://localhost:8005/api/v1/auth/health"},
+    {"name": "catalog-service", "port": 8002, "url": "http://localhost:8002/api/v1/catalog/health"},
+    {"name": "installation-service", "port": 8003, "url": "http://localhost:8003/api/v1/installation/health"},
+    {"name": "proxy-service", "port": 8004, "url": "http://localhost:8004/api/v1/proxy/health"},
 ]
 
 

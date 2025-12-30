@@ -12,7 +12,7 @@ Cat discovery and metadata service for Cat House platform.
 ## API Endpoints
 
 ### Health Check
-- `GET /api/v1/health` - Service health status
+- `GET /api/v1/catalog/health` - Service health status
 
 ### Catalog (To be implemented)
 - `GET /api/v1/catalog/cats` - List all cats
