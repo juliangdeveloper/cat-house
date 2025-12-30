@@ -1,0 +1,133 @@
+﻿name: Deploy Backend Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (e.g., staging, sha-abc123)'
+        required: true
+        default: 'staging'
+
+env:
+  AWS_REGION: sa-east-1
+  CLUSTER_NAME: cat-house-staging
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [auth-service, catalog-service, installation-service, proxy-service]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Verify Docker image exists in ECR
+      run: |
+        echo "Verifying that Docker image exists for ${{ matrix.service }}..."
+        
+        if aws ecr describe-images \
+          --repository-name cat-house/${{ matrix.service }} \
+          --image-ids imageTag=${{ github.event.inputs.image_tag }} \
+          --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+          echo " Image found: cat-house/${{ matrix.service }}:${{ github.event.inputs.image_tag }}"
+        else
+          echo " ERROR: Docker image not found in ECR"
+          echo "Expected image: cat-house/${{ matrix.service }}:${{ github.event.inputs.image_tag }}"
+          exit 1
+        fi
+    
+    - name: Get current task definition
+      id: get-task-def
+      run: |
+        echo "Fetching current task definition for ${{ matrix.service }}..."
+        aws ecs describe-task-definition \
+          --task-definition cat-house-staging-${{ matrix.service }} \
+          --query 'taskDefinition' > task-def.json
+    
+    - name: Update task definition with new image
+      run: |
+        echo "Updating task definition with image tag: ${{ github.event.inputs.image_tag }}"
+        
+        jq --arg image_tag "${{ github.event.inputs.image_tag }}" \
+           '.containerDefinitions[0].image = "578492750346.dkr.ecr.sa-east-1.amazonaws.com/cat-house/${{ matrix.service }}:" + $image_tag' \
+           task-def.json > task-def-updated.json
+    
+    - name: Inject secrets and register new task definition
+      id: register-task-def
+      env:
+        DATABASE_URL: ${{ secrets.NEON_STAGING_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      run: |
+        echo "Injecting secrets into task definition..."
+        
+        jq --arg db_url "$DATABASE_URL" \
+           --arg jwt_secret "$JWT_SECRET" \
+           --arg enc_key "$ENCRYPTION_KEY" \
+           '.containerDefinitions[0].environment += [
+             {"name":"DATABASE_URL","value":$db_url},
+             {"name":"JWT_SECRET","value":$jwt_secret},
+             {"name":"ENCRYPTION_KEY","value":$enc_key}
+           ] | del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)' \
+           task-def-updated.json > new-task-def.json
+        
+        NEW_TASK_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://new-task-def.json \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        
+        echo "task_arn=$NEW_TASK_ARN" >> $GITHUB_OUTPUT
+        echo "Registered new task definition: $NEW_TASK_ARN"
+    
+    - name: Update ECS service
+      run: |
+        echo "Deploying ${{ matrix.service }} to staging..."
+        
+        aws ecs update-service \
+          --cluster ${{ env.CLUSTER_NAME }} \
+          --service cat-house-staging-${{ matrix.service }} \
+          --task-definition ${{ steps.register-task-def.outputs.task_arn }} \
+          --force-new-deployment
+        
+        echo "Service ${{ matrix.service }} deployment initiated"
+    
+    - name: Wait for service stability
+      run: |
+        echo "Waiting for ${{ matrix.service }} to become stable..."
+        
+        aws ecs wait services-stable \
+          --cluster ${{ env.CLUSTER_NAME }} \
+          --services cat-house-staging-${{ matrix.service }}
+        
+        echo "Service ${{ matrix.service }} is stable"
+    
+    - name: Verify health check
+      run: |
+        SERVICE_NAME=$(echo "${{ matrix.service }}" | sed 's/-service$//')
+        
+        HEALTH_URL="http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
+        
+        echo "Health check URL: $HEALTH_URL"
+        echo "Waiting for service to be fully operational..."
+        
+        for i in {1..10}; do
+          echo "Attempt $i/10..."
+          if curl -f -s "$HEALTH_URL" --connect-timeout 5 --max-time 10; then
+            echo " Health check passed for ${{ matrix.service }}"
+            exit 0
+          fi
+          echo "Health check failed, retrying in 15s..."
+          sleep 15
+        done
+        
+        echo " Health check failed after 10 attempts (2.5 minutes)"
+        echo "Service may need more time to initialize or check CloudWatch logs for errors"
+        exit 1
