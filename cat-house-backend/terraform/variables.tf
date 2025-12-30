@@ -40,6 +40,18 @@ variable "hosted_zone_id" {
   default     = "Z060186227WPZP8YF5ZX8"
 }
 
+variable "frontend_domain_staging" {
+  description = "Custom domain for staging frontend"
+  type        = string
+  default     = "chs.gamificator.click"
+}
+
+variable "frontend_domain_production" {
+  description = "Custom domain for production frontend"
+  type        = string
+  default     = "chapp.gamificator.click"
+}
+
 # Sensitive variables are NOT defined in Terraform to keep credentials out of state files.
 # These are injected during deployment via GitHub Actions workflows using GitHub Secrets:
 #   - DATABASE_URL: Connection string from secrets.NEON_STAGING_DATABASE_URL or NEON_PRODUCTION_DATABASE_URL

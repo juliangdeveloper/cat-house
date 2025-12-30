@@ -61,8 +61,8 @@ resource "aws_cloudfront_distribution" "frontend" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100" # Use only North America and Europe
 
-  # No custom domain - use CloudFront default domain
-  # Custom domains can be added later with Route53 + ACM certificate
+  # Custom domain aliases based on environment
+  aliases = var.environment == "staging" ? [var.frontend_domain_staging] : var.environment == "production" ? [var.frontend_domain_production] : []
 
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
@@ -112,8 +112,13 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
-    minimum_protocol_version       = "TLSv1"
+    # Use ACM certificate for custom domain (CloudFront requires us-east-1 cert)
+    acm_certificate_arn      = var.environment == "staging" || var.environment == "production" ? var.certificate_arn_cloudfront : null
+    ssl_support_method       = var.environment == "staging" || var.environment == "production" ? "sni-only" : null
+    minimum_protocol_version = "TLSv1.2_2021"
+
+    # Use default certificate only for development
+    cloudfront_default_certificate = var.environment == "staging" || var.environment == "production" ? false : true
   }
 
   tags = {
