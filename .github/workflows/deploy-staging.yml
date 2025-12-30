@@ -5,7 +5,8 @@ on:
     workflows: ["Build and Push Docker Images"]
     types:
       - completed
-    branches: [ develop ]
+    branches:
+      - develop
   workflow_dispatch:
 
 env:
@@ -54,6 +55,7 @@ jobs:
   deploy-backend:
     needs: migrate
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     strategy:
       matrix:
         service: [auth-service, catalog-service, installation-service, proxy-service]
