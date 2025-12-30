@@ -4,16 +4,16 @@ from datetime import datetime
 
 router = APIRouter()
 
+
 class HealthResponse(BaseModel):
     status: str
     service: str
     timestamp: datetime
 
+
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
     return HealthResponse(
-        status="healthy",
-        service="catalog-service",
-        timestamp=datetime.utcnow()
+        status="healthy", service="catalog-service", timestamp=datetime.utcnow()
     )

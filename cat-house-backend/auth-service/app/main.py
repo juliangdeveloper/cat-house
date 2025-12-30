@@ -10,6 +10,7 @@ from app.middleware import correlation_id_middleware
 # Setup logging on startup
 setup_logging()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     logger.info(f"Shutting down {settings.service_name}")
+
 
 app = FastAPI(
     title=settings.service_name,
@@ -46,9 +48,7 @@ app.include_router(health.router, prefix="/api/v1", tags=["health"])
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=settings.port,
-        reload=settings.debug
+        "app.main:app", host="0.0.0.0", port=settings.port, reload=settings.debug
     )
