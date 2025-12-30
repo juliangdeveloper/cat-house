@@ -21,8 +21,6 @@ class Base(AsyncAttrs, DeclarativeBase):
     and provides the foundation for all models in the shared database.
     """
 
-    pass
-
 
 class BaseModel:
     """Base model mixin with common fields for all entities.

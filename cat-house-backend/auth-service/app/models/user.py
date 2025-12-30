@@ -7,7 +7,7 @@ Purpose: Core user authentication, role management, and profile data
 from typing import Optional
 
 from sqlalchemy import Boolean, Index, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, BaseModel
 

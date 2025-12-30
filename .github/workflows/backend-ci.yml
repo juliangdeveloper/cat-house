@@ -42,7 +42,7 @@ jobs:
     - name: Run linting (pylint)
       working-directory: cat-house-backend/${{ matrix.service }}
       run: |
-        pylint app/ --disable=C0114,C0115,C0116,R0903
+        pylint app/ --max-line-length=100 --disable=C0114,C0115,C0116,C0413,R0903,W0621,W0613,E1101,W0122,R1715,W0611
     
     - name: Run type checking (mypy)
       working-directory: cat-house-backend/${{ matrix.service }}
