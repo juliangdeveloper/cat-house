@@ -54,6 +54,8 @@ jobs:
       working-directory: cat-house-backend/${{ matrix.service }}
       env:
         DATABASE_URL: ${{ secrets.NEON_TEST_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
         ENVIRONMENT: test
       run: |
         pytest tests/ --cov=app --cov-report=xml --cov-report=term -v
