@@ -1,15 +1,15 @@
-﻿# Cat House Backend Services
+# Cat House Backend Services
 
 Microservices architecture for the Cat House platform - a marketplace for gamification integrations.
 
-**CI/CD Status:** ✅ Pipeline configured and passing (Dec 29, 2025)
+**CI/CD Status:** ? Consolidated pipeline configured (Dec 30, 2025)
 
 ## Architecture Overview
 
 The Cat House backend consists of four containerized FastAPI microservices:
 
 ```
-┐
++
                     API Gateway                          
               https://chapi.gamificator.click            
 
@@ -88,10 +88,10 @@ The Cat House backend consists of four containerized FastAPI microservices:
 **Connection Pooling:**
 ```
 Total: 10 connections (Neon Free Tier)
-├── Auth Service:         3 connections (pool_size=2, max_overflow=1)
-├── Catalog Service:      3 connections (pool_size=2, max_overflow=1)
-├── Installation Service: 3 connections (pool_size=2, max_overflow=1)
-└── Proxy Service:        1 connection  (pool_size=1, max_overflow=0)
++-- Auth Service:         3 connections (pool_size=2, max_overflow=1)
++-- Catalog Service:      3 connections (pool_size=2, max_overflow=1)
++-- Installation Service: 3 connections (pool_size=2, max_overflow=1)
++-- Proxy Service:        1 connection  (pool_size=1, max_overflow=0)
 ```
 
 ## Database Migrations
@@ -448,5 +448,6 @@ Proprietary - Cat House Platform
 
 **Maintained by:** Platform Engineering Team  
 **Last Updated:** December 2025
-#   D o c k e r   i m a g e s   b u i l d   t r i g g e r  
+#   D o c k e r   i m a g e s   b u i l d   t r i g g e r 
+ 
  
