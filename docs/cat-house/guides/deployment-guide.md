@@ -1,6 +1,6 @@
 # Cat House - Deployment Guide
 
-**Last Updated:** December 28, 2025  
+**Last Updated:** December 31, 2025  
 **Story Reference:** [Story 1.5 - CI/CD Pipeline Setup](../stories/1.5.cicd-pipeline-setup.md)
 
 ---
@@ -21,18 +21,19 @@
 
 ### ✅ Completed
 - [x] GitHub repository created: https://github.com/juliangdeveloper/cat-house
-- [x] Code pushed to master branch
-- [x] CI/CD workflows created in `.github/workflows/`
-- [x] Production-ready logging configured (JSON + correlation IDs)
-- [x] Terraform infrastructure code created
-- [x] Neon database branches created (main, staging, development)
+- [x] Code pushed to develop/main branches
+- [x] Consolidated CI/CD pipeline deployed (staging-pipeline.yml)
+- [x] Production-ready logging configured (JSON + X-Trace-ID)
+- [x] Terraform infrastructure deployed (ALB-only architecture)
+- [x] Neon database branches: production, staging, development, test
+- [x] Custom domains configured (chs.gamificator.click, chapp.gamificator.click)
 
 ### 📋 Required Accounts & Access
 - [x] GitHub account with repository access
-- [x] AWS account with IAM user created (`github-actions-cathouse`)
+- [x] AWS account with IAM user created (`cathouse-deployer`)
 - [x] Neon account with project and branches
-- [ ] AWS CLI installed and configured locally
-- [ ] Terraform installed (v1.0+)
+- [x] AWS CLI installed and configured locally
+- [x] Terraform installed (v1.0+)
 
 ---
 
@@ -54,12 +55,12 @@ Navigate to: https://github.com/juliangdeveloper/cat-house/settings/secrets/acti
 ✅ NEON_PRODUCTION_DATABASE_URL   (main branch - for production deploy)
 
 # Application Secrets
-⚠️ JWT_SECRET                     (generate with: openssl rand -base64 32)
-⚠️ ENCRYPTION_KEY                 (generate with: openssl rand -hex 32)
+✅ JWT_SECRET                     (configured)
+✅ ENCRYPTION_KEY                 (configured)
 
-# CloudFront (added after Terraform)
-⏳ CLOUDFRONT_STAGING_ID          (will be added after Terraform)
-⏳ CLOUDFRONT_PRODUCTION_ID       (will be added after Terraform)
+# CloudFront Distribution IDs
+✅ CLOUDFRONT_STAGING_ID          (E2P1VZI2R1DYQF)
+✅ CLOUDFRONT_PRODUCTION_ID       (ECZ0AQQPGNTPJ)
 ```
 
 **Generate Secure Secrets:**
@@ -96,7 +97,7 @@ aws configure
 # Enter:
 # - AWS Access Key ID: [same as GitHub secret]
 # - AWS Secret Access Key: [same as GitHub secret]
-# - Default region: us-east-1
+# - Default region: sa-east-1
 # - Default output: json
 ```
 
@@ -141,15 +142,12 @@ Create `terraform.tfvars`:
 
 ```powershell
 @"
-aws_region = "us-east-1"
+aws_region = "sa-east-1"
 environment = "staging"
-
-# Service URLs will be updated after ECS deployment
-auth_service_url = "http://placeholder:8005"
-catalog_service_url = "http://placeholder:8002"
-installation_service_url = "http://placeholder:8003"
-proxy_service_url = "http://placeholder:8004"
-health_aggregator_url = "http://placeholder:8000"
+certificate_arn = "arn:aws:acm:us-east-1:578492750346:certificate/25745008-889d-4163-bba2-d71065c1b353"
+hosted_zone_id = "Z060186227WPZP8YF5ZX8"
+domain_name = "chs.gamificator.click"
+app_prefix = "cat-house"
 "@ | Out-File -FilePath terraform.tfvars -Encoding utf8
 ```
 
@@ -160,13 +158,14 @@ terraform plan -var-file="terraform.tfvars"
 ```
 
 **Review Output:**
-- ECR repositories (5) will be created
+- ECR repositories (4) will be created
 - ECS cluster will be created
-- ECS task definitions (5) will be created
-- ECS services (5) will be created
+- ECS task definitions (4) will be created
+- ECS services (4) will be created
+- Application Load Balancer will be created
 - S3 bucket for frontend will be created
-- CloudFront distribution will be created
-- CloudWatch log groups (5) will be created
+- CloudFront distribution with custom domain will be created
+- CloudWatch log groups (4) will be created
 - IAM roles and policies will be created
 
 ### 5. Apply Terraform (Create Infrastructure)
@@ -186,6 +185,9 @@ After successful deployment:
 ```powershell
 # Get ECR repository URLs
 terraform output ecr_repository_urls
+
+# Get ALB DNS name
+terraform output alb_dns_name
 
 # Get CloudFront distribution ID
 terraform output cloudfront_distribution_id
@@ -216,81 +218,53 @@ CLOUDFRONT_PRODUCTION_ID = [will be same for now, or deploy prod separately]
 ### Deployment Flow Overview
 
 ```
-Code Change → Push to GitHub → CI Tests → Build Docker Images → Push to ECR → Deploy to ECS → Verify Health
+Push to develop → Test (4 services) → Build → Migrate → Deploy Backend → Deploy Frontend
 ```
 
-### 1. Build and Push Docker Images Manually (First Time)
+### Automated Deployment via GitHub Actions
 
-Since workflows need images to exist in ECR first:
+El pipeline consolidado `staging-pipeline.yml` maneja todo automáticamente:
 
 ```powershell
-# Get ECR login
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [AWS_ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com
-
-# Build and push auth-service
-cd "cat-house-backend/auth-service"
-docker build -t cat-house/auth-service:latest .
-docker tag cat-house/auth-service:latest [ECR_URL]/cat-house/auth-service:latest
-docker push [ECR_URL]/cat-house/auth-service:latest
-
-# Repeat for other services:
-# - catalog-service
-# - installation-service
-# - proxy-service
-# - health-aggregator
+# Push to develop branch triggers full pipeline
+git checkout develop
+git add .
+git commit -m "Deploy to staging"
+git push origin develop
 ```
 
-### 2. Update ECS Services with New Images
+**Pipeline ejecuta:**
+1. **Test:** pytest + black + pylint en 4 servicios
+2. **Build:** Docker images → ECR con tags :staging y :sha
+3. **Migrate:** Alembic migrations en auth-service
+4. **Deploy Backend:** 4 servicios a ECS con secrets injection
+5. **Deploy Frontend:** Expo web → S3 → CloudFront invalidation
+
+### Production Deployment
 
 ```powershell
-aws ecs update-service `
-  --cluster cat-house-staging `
-  --service cat-house-staging-auth-service `
-  --force-new-deployment `
-  --region us-east-1
+# 1. Merge develop to main (triggers retag workflow)
+git checkout main
+git merge develop
+git push origin main
 
-# Repeat for all 5 services
+# 2. Manually trigger production deployment
+# Go to: https://github.com/juliangdeveloper/cat-house/actions
+# Run: deploy-production.yml (requires approval)
 ```
 
-### 3. Run Database Migration
+### Manual Database Migration (if needed)
 
 ```powershell
-# Get auth-service task definition
+# Migrations run automatically via GitHub Actions
+# Manual execution (solo si es necesario):
 aws ecs run-task `
   --cluster cat-house-staging `
   --task-definition cat-house-staging-auth-service `
   --launch-type FARGATE `
-  --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}" `
   --overrides '{"containerOverrides":[{"name":"auth-service","command":["alembic","upgrade","head"]}]}' `
-  --region us-east-1
+  --region sa-east-1
 ```
-
-### 4. Test Automated Workflows
-
-**Create a feature branch:**
-```powershell
-cd "c:\Users\Rog\OneDrive - Universidad de Antioquia\Main\Empresas\Micro SaaS\My cat manager"
-git checkout -b feature/test-ci
-```
-
-**Make a small change:**
-```powershell
-# Edit any file (e.g., README.md)
-git add .
-git commit -m "Test CI/CD pipeline"
-git push -u origin feature/test-ci
-```
-
-**Create Pull Request:**
-- Go to GitHub: https://github.com/juliangdeveloper/cat-house/pulls
-- Click "New pull request"
-- Select `feature/test-ci` → `master`
-- Create PR
-
-**Watch Workflows Run:**
-- Backend CI will run tests and linting
-- Frontend CI will run tests and build
-- Both must pass before merge
 
 ---
 
@@ -299,8 +273,8 @@ git push -u origin feature/test-ci
 ### 1. Verify ECS Services are Running
 
 ```powershell
-aws ecs list-services --cluster cat-house-staging --region us-east-1
-aws ecs describe-services --cluster cat-house-staging --services [service-name] --region us-east-1
+aws ecs list-services --cluster cat-house-staging --region sa-east-1
+aws ecs describe-services --cluster cat-house-staging --services cat-house-staging-auth-service --region sa-east-1
 ```
 
 **Check:**
@@ -311,7 +285,7 @@ aws ecs describe-services --cluster cat-house-staging --services [service-name] 
 
 ```powershell
 # View logs for auth-service
-aws logs tail /ecs/cat-house/staging/auth-service --follow --region us-east-1
+aws logs tail /ecs/cat-house/staging/auth-service --follow --region sa-east-1
 ```
 
 **Verify:**
@@ -319,16 +293,15 @@ aws logs tail /ecs/cat-house/staging/auth-service --follow --region us-east-1
 - Trace IDs present (X-Trace-ID)
 - No errors during startup
 
-### 3. Test Service Health Endpoints
+### 3. Test ALB Health Endpoints
 
 ```powershell
-# Get service public IP (from ECS task)
-$TASK_ARN = aws ecs list-tasks --cluster cat-house-staging --service-name cat-house-staging-auth-service --query 'taskArns[0]' --output text
-$TASK_DETAILS = aws ecs describe-tasks --cluster cat-house-staging --tasks $TASK_ARN --query 'tasks[0].attachments[0].details' --output json
-# Extract public IP from network interface
+# Test ALB health check
+curl http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/health
 
-# Test health endpoint
-curl http://[PUBLIC_IP]:8005/api/v1/health
+# Test service-specific endpoints
+curl http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/auth/health
+curl http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/catalog/health
 ```
 
 **Expected Response:**
@@ -336,33 +309,27 @@ curl http://[PUBLIC_IP]:8005/api/v1/health
 {
   "status": "healthy",
   "service": "auth-service",
-  "timestamp": "2025-12-28T...",
+  "timestamp": "2025-12-31T...",
   "database": "connected"
 }
 ```
 
-### 4. Test API Gateway (when configured)
+### 4. Test Frontend Deployment
 
 ```powershell
-curl https://api-staging.gamificator.click/health
-curl https://api-staging.gamificator.click/api/v1/auth/health
+# Staging frontend
+start https://chs.gamificator.click
+
+# Production frontend
+start https://chapp.gamificator.click
 ```
 
-### 5. Test Frontend Deployment
-
-```powershell
-# Get CloudFront URL
-terraform output cloudfront_domain_name
-
-# Visit in browser
-start https://[cloudfront-url]
-```
-
-### 6. Monitor Deployment in GitHub Actions
+### 5. Monitor Deployment in GitHub Actions
 
 - Go to: https://github.com/juliangdeveloper/cat-house/actions
-- Check workflow runs
-- Verify all steps pass
+- Workflow: `staging-pipeline.yml` (auto-deploy on develop)
+- Workflow: `deploy-production.yml` (manual approval required)
+- Verify all 5 jobs pass: test → build → migrate → deploy-backend → deploy-frontend
 
 ---
 
@@ -373,7 +340,7 @@ start https://[cloudfront-url]
 **Error:** `Error creating ECR repository`
 ```powershell
 # Check if repositories already exist
-aws ecr describe-repositories --region us-east-1
+aws ecr describe-repositories --region sa-east-1
 
 # If exists, import to Terraform state
 terraform import aws_ecr_repository.services["auth-service"] auth-service
@@ -435,12 +402,7 @@ aws cloudfront create-invalidation `
 
 ## Next Steps After Successful Deployment
 
-1. **Configure Custom Domain (Optional):**
-   - Request ACM certificate for `api.gamificator.click`
-   - Update API Gateway custom domain
-   - Configure Route 53 DNS
-
-2. **Set Up Monitoring:**
+1. **Set Up Monitoring:**
    - Configure CloudWatch alarms
    - Set up SNS notifications
    - Enable X-Ray tracing

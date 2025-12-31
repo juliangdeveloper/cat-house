@@ -18,4 +18,4 @@
 ---
 
 **Document Owner:** Sarah (Product Owner Agent)  
-**Last Updated:** November 21, 2025
+**Last Updated:** December 31, 2025
