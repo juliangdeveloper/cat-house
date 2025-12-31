@@ -48,6 +48,35 @@ jobs:
           exit 1
         fi
         
+        # Check if production tag already exists
+        EXISTING_PROD=$(aws ecr describe-images \
+          --repository-name $REPO \
+          --image-ids imageTag=production \
+          --query 'imageDetails[0].imageTags' \
+          --output text 2>/dev/null || echo "")
+        
+        if [ ! -z "$EXISTING_PROD" ]; then
+          echo "ℹ️  Production tag already exists for $SERVICE, checking if it matches staging..."
+          
+          # Get production manifest
+          PROD_MANIFEST=$(aws ecr batch-get-image \
+            --repository-name $REPO \
+            --image-ids imageTag=production \
+            --query 'images[].imageManifest' \
+            --output text)
+          
+          if [ "$MANIFEST" == "$PROD_MANIFEST" ]; then
+            echo "✅ Production tag already points to the same image as staging - skipping retag"
+            exit 0
+          else
+            echo "⚠️  Production tag exists but points to a different image - updating..."
+            # Delete old production tag
+            aws ecr batch-delete-image \
+              --repository-name $REPO \
+              --image-ids imageTag=production
+          fi
+        fi
+        
         # Tag the same image as production (no rebuild, just metadata)
         aws ecr put-image \
           --repository-name $REPO \
