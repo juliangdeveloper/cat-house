@@ -150,8 +150,8 @@ jobs:
         # Extract service name without -service suffix for health endpoint
         SERVICE_NAME=$(echo "${{ matrix.service }}" | sed 's/-service$//')
         
-        # Production ALB health endpoint (update URL when available)
-        HEALTH_URL="http://cat-house-production-alb.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
+        # Production ALB health endpoint
+        HEALTH_URL="http://cat-house-production-alb-1773695723.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
         
         echo "Health check URL: $HEALTH_URL"
         
