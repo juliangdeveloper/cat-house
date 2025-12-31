@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to deploy (git SHA or tag)'
-        required: true
-        default: 'latest'
+        description: 'Version to deploy (git SHA or tag, leave empty for latest main)'
+        required: false
+        default: ''
 
 env:
   AWS_REGION: sa-east-1
@@ -25,7 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.version }}
+        ref: ${{ github.event.inputs.version || 'main' }}
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -61,7 +61,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.version }}
+        ref: ${{ github.event.inputs.version || 'main' }}
     
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -178,7 +178,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.version }}
+        ref: ${{ github.event.inputs.version || 'main' }}
     
     - name: Set up Node.js
       uses: actions/setup-node@v4
