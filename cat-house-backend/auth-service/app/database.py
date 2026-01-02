@@ -1,4 +1,4 @@
-﻿"""Database connection and session management for auth-service.
+"""Database connection and session management for auth-service.
 
 This module configures SQLAlchemy async engine with Neon-specific settings:
 - Connection pooling optimized for serverless

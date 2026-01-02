@@ -1,4 +1,4 @@
-﻿"""Base SQLAlchemy models for Cat House.
+"""Base SQLAlchemy models for Cat House.
 
 This module defines the base classes used by all models across all services.
 Following Neon AI Rules best practices for serverless PostgreSQL.
