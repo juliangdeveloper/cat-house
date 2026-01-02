@@ -1,0 +1,89 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Service Health Status",
+        "metrics": [
+          ["CatHouse/Services", "service_health_status", {"service": "auth-service", "stat": "Average"}],
+          [".", ".", {"service": "catalog-service"}],
+          [".", ".", {"service": "installation-service"}],
+          [".", ".", {"service": "proxy-service"}]
+        ],
+        "period": 60,
+        "region": "sa-east-1",
+        "yAxis": {"left": {"min": 0, "max": 1}}
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "ECS Task Count",
+        "metrics": [
+          ["AWS/ECS", "RunningTaskCount", {"ServiceName": "cat-house-staging-auth-service"}],
+          [".", ".", {"ServiceName": "cat-house-staging-catalog-service"}],
+          [".", ".", {"ServiceName": "cat-house-staging-installation-service"}],
+          [".", ".", {"ServiceName": "cat-house-staging-proxy-service"}]
+        ],
+        "period": 300,
+        "region": "sa-east-1",
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "HTTP Request Rate",
+        "metrics": [
+          ["CatHouse/Services", "http_requests_total", {"stat": "Sum", "period": 60}]
+        ],
+        "period": 300,
+        "region": "sa-east-1",
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Error Rate by Service",
+        "metrics": [
+          ["CatHouse/Services", "ErrorCount", {"service": "auth-service"}],
+          [".", ".", {"service": "catalog-service"}],
+          [".", ".", {"service": "installation-service"}],
+          [".", ".", {"service": "proxy-service"}]
+        ],
+        "period": 300,
+        "stat": "Sum",
+        "region": "sa-east-1"
+      }
+    },
+    {
+      "type": "log",
+      "x": 0,
+      "y": 12,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "title": "Recent Errors",
+        "query": "SOURCE '/ecs/cat-house/staging/auth-service' '/ecs/cat-house/staging/catalog-service' '/ecs/cat-house/staging/installation-service' '/ecs/cat-house/staging/proxy-service' | fields @timestamp, service, message, trace_id | filter level = 'ERROR' | sort @timestamp desc | limit 20",
+        "region": "sa-east-1"
+      }
+    }
+  ]
+}

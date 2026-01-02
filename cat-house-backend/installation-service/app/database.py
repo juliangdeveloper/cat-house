@@ -1,4 +1,4 @@
-﻿"""Database connection and session management for installation-service.
+"""Database connection and session management for installation-service.
 
 Connection Allocation (installation-service):
 - pool_size=2, max_overflow=1 (max 3 connections)

@@ -1,5 +1,5 @@
 """
-Correlation ID middleware for distributed tracing across microservices.
+Middleware for correlation IDs and metrics tracking.
 """
 
 import time
@@ -45,3 +45,39 @@ async def correlation_id_middleware(request: Request, call_next):
     )
 
     return response
+
+
+async def metrics_middleware(request: Request, call_next):
+    """Track metrics for all requests."""
+    from app.metrics import (
+        track_request_metrics,
+        http_requests_in_progress,
+    )
+    from app.config import settings
+
+    # Track in-progress requests
+    http_requests_in_progress.labels(
+        method=request.method, service=settings.service_name
+    ).inc()
+
+    start_time = time.time()
+
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+
+        # Track request metrics
+        track_request_metrics(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=response.status_code,
+            duration=duration,
+        )
+
+        return response
+
+    finally:
+        # Decrement in-progress counter
+        http_requests_in_progress.labels(
+            method=request.method, service=settings.service_name
+        ).dec()
