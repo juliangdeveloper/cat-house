@@ -1,4 +1,4 @@
-﻿from typing import List
+from typing import List
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     )
 
     # Service configuration
-    service_name: str = "Installation Service"
+    service_name: str = "installation-service"
+    service_display_name: str = "Installation Service"
     debug: bool = False
     port: int = 8003
     environment: str = "development"

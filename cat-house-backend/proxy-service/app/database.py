@@ -1,4 +1,4 @@
-﻿"""Database connection and session management for proxy-service.
+"""Database connection and session management for proxy-service.
 
 Connection Allocation (proxy-service):
 - pool_size=1, max_overflow=0 (max 1 connection, read-only)

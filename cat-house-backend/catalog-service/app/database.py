@@ -1,4 +1,4 @@
-﻿"""Database connection and session management for catalog-service.
+"""Database connection and session management for catalog-service.
 
 Connection Allocation (catalog-service):
 - pool_size=2, max_overflow=1 (max 3 connections)

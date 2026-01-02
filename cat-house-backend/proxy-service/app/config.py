@@ -1,4 +1,4 @@
-﻿from typing import List
+from typing import List
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     )
 
     # Service configuration
-    service_name: str = "Cat Proxy Service"
+    service_name: str = "proxy-service"
+    service_display_name: str = "Cat Proxy Service"
     debug: bool = False
     port: int = 8004
     environment: str = "development"

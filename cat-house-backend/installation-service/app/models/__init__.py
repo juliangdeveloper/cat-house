@@ -1,4 +1,4 @@
-﻿"""Models for installation-service.
+"""Models for installation-service.
 
 This module exports all models owned by installation-service.
 All models use the shared database defined in base.py.

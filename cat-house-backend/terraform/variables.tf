@@ -58,3 +58,17 @@ variable "frontend_domain_production" {
 #   - JWT_SECRET: Secret key from secrets.JWT_SECRET  
 #   - ENCRYPTION_KEY: Encryption key from secrets.ENCRYPTION_KEY
 # See .github/workflows/deploy-staging.yml and deploy-production.yml for implementation.
+
+# Monitoring and Alerting
+variable "alert_email" {
+  description = "Email address for CloudWatch alarm notifications"
+  type        = string
+  default     = ""  # Must be set in terraform.tfvars
+}
+
+variable "slack_webhook_url" {
+  description = "Slack webhook URL for alarm notifications (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

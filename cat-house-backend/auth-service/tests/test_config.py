@@ -7,7 +7,8 @@ def test_settings_defaults():
     """Test that settings have appropriate default values."""
     settings = Settings()
     
-    assert settings.service_name == "Auth Service"
+    assert settings.service_name == "auth-service"
+    assert settings.service_display_name == "Auth Service"
     assert settings.debug is False
     assert settings.port == 8005
     assert isinstance(settings.allowed_origins, list)

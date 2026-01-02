@@ -1,0 +1,90 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Request Latency (p50, p95, p99)",
+        "metrics": [
+          ["CatHouse/Services", "http_request_duration_seconds", {"stat": "p50"}],
+          [".", ".", {"stat": "p95"}],
+          [".", ".", {"stat": "p99"}]
+        ],
+        "period": 300,
+        "region": "sa-east-1",
+        "yAxis": {"left": {"label": "Seconds"}}
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Requests In Progress",
+        "metrics": [
+          ["CatHouse/Services", "http_requests_in_progress", {"stat": "Average"}]
+        ],
+        "period": 60,
+        "region": "sa-east-1"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "HTTP Status Codes",
+        "metrics": [
+          ["CatHouse/Services", "http_requests_total", {"status": "2xx", "stat": "Sum"}],
+          [".", ".", {"status": "4xx"}],
+          [".", ".", {"status": "5xx"}]
+        ],
+        "period": 300,
+        "region": "sa-east-1",
+        "stat": "Sum"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Database Query Duration",
+        "metrics": [
+          ["CatHouse/Services", "db_query_duration_seconds", {"stat": "Average"}],
+          [".", ".", {"stat": "p95"}]
+        ],
+        "period": 300,
+        "region": "sa-east-1"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "title": "Active DB Connections",
+        "metrics": [
+          ["CatHouse/Services", "db_connections_active", {"service": "auth-service"}],
+          [".", ".", {"service": "catalog-service"}],
+          [".", ".", {"service": "installation-service"}],
+          [".", ".", {"service": "proxy-service"}]
+        ],
+        "period": 60,
+        "stat": "Average",
+        "region": "sa-east-1"
+      }
+    }
+  ]
+}
