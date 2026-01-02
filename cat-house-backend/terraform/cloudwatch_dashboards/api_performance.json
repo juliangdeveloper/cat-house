@@ -7,13 +7,12 @@
       "width": 12,
       "height": 6,
       "properties": {
-        "title": "Request Latency (p50, p95, p99)",
+        "title": "Request Latency (Average)",
         "metrics": [
-          ["CatHouse/Services", "http_request_duration_seconds", {"stat": "p50"}],
-          [".", ".", {"stat": "p95"}],
-          [".", ".", {"stat": "p99"}]
+          ["CatHouse/Services", "http_request_duration_seconds"]
         ],
         "period": 300,
+        "stat": "Average",
         "region": "sa-east-1",
         "yAxis": {"left": {"label": "Seconds"}}
       }
@@ -27,9 +26,10 @@
       "properties": {
         "title": "Requests In Progress",
         "metrics": [
-          ["CatHouse/Services", "http_requests_in_progress", {"stat": "Average"}]
+          ["CatHouse/Services", "http_requests_in_progress"]
         ],
         "period": 60,
+        "stat": "Average",
         "region": "sa-east-1"
       }
     },
@@ -42,9 +42,9 @@
       "properties": {
         "title": "HTTP Status Codes",
         "metrics": [
-          ["CatHouse/Services", "http_requests_total", {"status": "2xx", "stat": "Sum"}],
-          [".", ".", {"status": "4xx"}],
-          [".", ".", {"status": "5xx"}]
+          ["CatHouse/Services", "http_requests_total", "status", "2xx"],
+          ["CatHouse/Services", "http_requests_total", "status", "4xx"],
+          ["CatHouse/Services", "http_requests_total", "status", "5xx"]
         ],
         "period": 300,
         "region": "sa-east-1",
@@ -58,12 +58,12 @@
       "width": 12,
       "height": 6,
       "properties": {
-        "title": "Database Query Duration",
+        "title": "Database Query Duration (Average)",
         "metrics": [
-          ["CatHouse/Services", "db_query_duration_seconds", {"stat": "Average"}],
-          [".", ".", {"stat": "p95"}]
+          ["CatHouse/Services", "db_query_duration_seconds"]
         ],
         "period": 300,
+        "stat": "Average",
         "region": "sa-east-1"
       }
     },
@@ -76,10 +76,10 @@
       "properties": {
         "title": "Active DB Connections",
         "metrics": [
-          ["CatHouse/Services", "db_connections_active", {"service": "auth-service"}],
-          [".", ".", {"service": "catalog-service"}],
-          [".", ".", {"service": "installation-service"}],
-          [".", ".", {"service": "proxy-service"}]
+          ["CatHouse/Services", "db_connections_active", "service", "auth-service"],
+          ["CatHouse/Services", "db_connections_active", "service", "catalog-service"],
+          ["CatHouse/Services", "db_connections_active", "service", "installation-service"],
+          ["CatHouse/Services", "db_connections_active", "service", "proxy-service"]
         ],
         "period": 60,
         "stat": "Average",

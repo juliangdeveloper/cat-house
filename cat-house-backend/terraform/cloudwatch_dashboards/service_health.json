@@ -9,12 +9,13 @@
       "properties": {
         "title": "Service Health Status",
         "metrics": [
-          ["CatHouse/Services", "service_health_status", {"service": "auth-service", "stat": "Average"}],
-          [".", ".", {"service": "catalog-service"}],
-          [".", ".", {"service": "installation-service"}],
-          [".", ".", {"service": "proxy-service"}]
+          ["CatHouse/Services", "service_health_status", "service", "auth-service"],
+          ["CatHouse/Services", "service_health_status", "service", "catalog-service"],
+          ["CatHouse/Services", "service_health_status", "service", "installation-service"],
+          ["CatHouse/Services", "service_health_status", "service", "proxy-service"]
         ],
         "period": 60,
+        "stat": "Average",
         "region": "sa-east-1",
         "yAxis": {"left": {"min": 0, "max": 1}}
       }
@@ -28,10 +29,10 @@
       "properties": {
         "title": "ECS Task Count",
         "metrics": [
-          ["AWS/ECS", "RunningTaskCount", {"ServiceName": "cat-house-staging-auth-service"}],
-          [".", ".", {"ServiceName": "cat-house-staging-catalog-service"}],
-          [".", ".", {"ServiceName": "cat-house-staging-installation-service"}],
-          [".", ".", {"ServiceName": "cat-house-staging-proxy-service"}]
+          ["AWS/ECS", "RunningTaskCount", "ServiceName", "cat-house-staging-auth-service"],
+          ["AWS/ECS", "RunningTaskCount", "ServiceName", "cat-house-staging-catalog-service"],
+          ["AWS/ECS", "RunningTaskCount", "ServiceName", "cat-house-staging-installation-service"],
+          ["AWS/ECS", "RunningTaskCount", "ServiceName", "cat-house-staging-proxy-service"]
         ],
         "period": 300,
         "region": "sa-east-1",
@@ -47,7 +48,7 @@
       "properties": {
         "title": "HTTP Request Rate",
         "metrics": [
-          ["CatHouse/Services", "http_requests_total", {"stat": "Sum", "period": 60}]
+          ["CatHouse/Services", "http_requests_total"]
         ],
         "period": 300,
         "region": "sa-east-1",
@@ -63,10 +64,10 @@
       "properties": {
         "title": "Error Rate by Service",
         "metrics": [
-          ["CatHouse/Services", "ErrorCount", {"service": "auth-service"}],
-          [".", ".", {"service": "catalog-service"}],
-          [".", ".", {"service": "installation-service"}],
-          [".", ".", {"service": "proxy-service"}]
+          ["CatHouse/Services", "ErrorCount", "service", "auth-service"],
+          ["CatHouse/Services", "ErrorCount", "service", "catalog-service"],
+          ["CatHouse/Services", "ErrorCount", "service", "installation-service"],
+          ["CatHouse/Services", "ErrorCount", "service", "proxy-service"]
         ],
         "period": 300,
         "stat": "Sum",

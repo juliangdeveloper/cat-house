@@ -38,21 +38,10 @@ resource "aws_sns_topic_subscription" "warning_email" {
   endpoint  = var.alert_email
 }
 
-# Slack webhook integration
-# Note: Slack webhooks use HTTPS protocol in SNS
-resource "aws_sns_topic_subscription" "critical_slack" {
-  count     = var.slack_webhook_url != "" ? 1 : 0
-  topic_arn = aws_sns_topic.critical_alerts.arn
-  protocol  = "https"
-  endpoint  = var.slack_webhook_url
-}
-
-resource "aws_sns_topic_subscription" "warning_slack" {
-  count     = var.slack_webhook_url != "" ? 1 : 0
-  topic_arn = aws_sns_topic.warning_alerts.arn
-  protocol  = "https"
-  endpoint  = var.slack_webhook_url
-}
+# Slack integration via AWS Chatbot
+# Note: Slack notifications are configured through AWS Chatbot console
+# See docs/monitoring/aws-chatbot-setup.md for configuration details
+# The SNS topics are subscribed to Slack via AWS Chatbot, not directly here
 
 # Outputs for reference
 output "critical_alerts_topic_arn" {

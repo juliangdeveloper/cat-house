@@ -2,7 +2,28 @@
 
 ## Pre-Push Validation (MANDATORY - NO EXCEPTIONS)
 
-### 1. Code Quality Checks
+### 1. Run Tests
+```bash
+# Run from cat-house-backend/ directory
+
+# Run tests for ALL services
+foreach ($s in @("auth-service", "catalog-service", "installation-service", "proxy-service")) {
+  Write-Host "`n=== Running tests in $s ===" -ForegroundColor Cyan
+  cd $s
+  if (Test-Path "tests") { pytest tests/ -v } else { Write-Host "No tests directory found" -ForegroundColor Yellow }
+  cd ..
+}
+```
+
+**EXPECTED RESULT:**
+- All tests pass with "X passed in Y.YYs"
+- No failed or skipped tests
+
+**IF FAILED:** Fix the failing tests before proceeding.
+
+---
+
+### 2. Code Quality Checks
 ```bash
 # Run from cat-house-backend/ directory
 
@@ -29,7 +50,7 @@ foreach ($s in @("auth-service", "catalog-service", "installation-service", "pro
 
 ---
 
-### 2. Workflow Trigger Validation
+### 3. Workflow Trigger Validation
 
 **CRITICAL:** GitHub Actions workflows have **path filters**. Changes must be in the correct directory to trigger.
 
@@ -57,7 +78,7 @@ git push origin develop
 
 ---
 
-### 3. Workflow Syntax Validation
+### 4. Workflow Syntax Validation
 
 **BEFORE committing workflow changes:**
 
@@ -81,7 +102,7 @@ Test-Path .github/workflows/retag-for-production.yml
 
 ---
 
-### 4. Secrets Validation
+### 5. Secrets Validation
 
 **Required GitHub Secrets:**
 - `AWS_ACCESS_KEY_ID`
@@ -100,7 +121,7 @@ Test-Path .github/workflows/retag-for-production.yml
 
 ---
 
-### 5. Terraform State Validation
+### 6. Terraform State Validation
 
 **BEFORE terraform apply:**
 
@@ -119,14 +140,11 @@ terraform plan -var-file="terraform.tfvars"
 terraform apply -var-file="terraform.tfvars" -auto-approve
 ```
 
-**Red Flags:**
-- Destroying resources you didn't intend to remove
-- More than 10 resources changing when you only modified 1 file
-- Secrets appearing in terraform state (they should NOT be there)
+**Red Flags:** Destroying unintended resources, excessive changes (>10 when modifying 1 file), or secrets in state
 
 ---
 
-### 6. Post-Push Monitoring
+### 7. Post-Push Monitoring
 
 **IMMEDIATELY after `git push`:**
 
@@ -135,20 +153,13 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 3. **Verify the correct workflow started** (check commit SHA matches)
 4. **Monitor for errors** in the first 2 minutes
 
-**Expected Timeline:**
-- Backend CI: ~3-5 minutes
-- Build Images: ~6-7 minutes (starts after Backend CI ✅)
-- Deploy Staging: ~3-4 minutes (starts after Build Images ✅)
-- **Total: 12-16 minutes**
+**Timeline:** Backend CI (3-5m) → Build Images (6-7m) → Deploy Staging (3-4m) = **12-16m total**
 
-**If nothing appears after 1 minute:**
-- ❌ Path filter didn't match (you need to modify a file in the right directory)
-- ❌ Workflow file has syntax error (check Actions tab for parsing errors)
-- ❌ Branch name is wrong (check you're on `develop` branch)
+**If nothing starts after 1 minute:** Check path filters match your changes (see section 2)
 
 ---
 
-### 7. Deployment Verification
+### 8. Deployment Verification
 
 **After Deploy to Staging completes:**
 
@@ -175,108 +186,55 @@ curl https://d1vmti7es7a518.cloudfront.net
 }
 ```
 
-**If 503 Service Unavailable:**
-- ECS tasks are still starting (wait 1-2 minutes)
-- Check ECS console for task errors
-- Check CloudWatch logs for application errors
-
----
-
-### 8. Common Mistakes to Avoid
-
-❌ **NEVER DO THIS:**
-- Push without running black/pylint locally
-- Commit workflow changes without validating YAML syntax
-- Assume commit will trigger workflows (always verify path filters)
-- Push to main branch directly (use develop → PR → main)
-- Run `terraform apply` without reviewing `terraform plan` output
-- Ignore workflow failures (fix them immediately)
-
-✅ **ALWAYS DO THIS:**
-- Run black and pylint before every commit
-- Verify path filters match your changes
-- Monitor GitHub Actions after every push
-- Review terraform plan before apply
-- Test health checks after deployment
-- Read error messages completely before asking for help
+**If 503:** Wait 1-2 minutes for tasks to start, then check ECS console/CloudWatch logs
 
 ---
 
 ### 9. Emergency Rollback
 
-**If deployment breaks production:**
-
 ```bash
-# Option 1: Revert commit
+# Revert commit
 git revert <bad-commit-sha>
 git push origin develop
 
-# Option 2: Redeploy previous version
-# Go to GitHub Actions → Deploy to Production → Re-run jobs (select previous successful run)
-
-# Option 3: Terraform rollback
-cd cat-house-backend/terraform
-terraform plan -var-file="terraform.tfvars"  # Review what will change
-terraform apply -var-file="terraform.tfvars"  # Apply previous state
+# OR redeploy previous version via GitHub Actions → Deploy to Production → Re-run jobs
 ```
 
 ---
 
 ### 10. Debug Checklist
 
-**Workflow not triggering:**
-1. ✅ Check branch name: `git branch --show-current` (should be `develop`)
-2. ✅ Check path filter: Did you modify files in `cat-house-backend/**`?
-3. ✅ Check GitHub Actions tab for parsing errors
-4. ✅ Wait 60 seconds (GitHub Actions can be slow)
-
 **Workflow failing:**
-1. ✅ Click on the failed job
-2. ✅ Expand the failed step
-3. ✅ Read the FULL error message (don't skip lines)
-4. ✅ Check if it's a linting error (run black/pylint locally)
-5. ✅ Check if it's a secrets error (verify GitHub secrets exist)
-6. ✅ Check if it's a dependency error (update requirements.txt)
+1. Read the FULL error message in the failed step
+2. Linting error → run black/pylint locally
+3. Secrets error → verify GitHub secrets exist
+4. Dependency error → update requirements.txt
 
 **Deployment not working:**
-1. ✅ Check ECS console for task status
-2. ✅ Check CloudWatch logs for errors
-3. ✅ Verify Docker images exist in ECR with correct tags
-4. ✅ Verify secrets are injected correctly (check ECS task definition)
-5. ✅ Verify target group health checks are passing
+1. Check ECS console for task status and CloudWatch logs
+2. Verify Docker images exist in ECR with correct tags
+3. Verify target group health checks are passing
 
 ---
 
-## Summary: Before Every Push
+## Pre-Push Quick Reference
 
 ```bash
-# 1. Format code
+# 1. Run tests (see section 1 for details)
 cd cat-house-backend
 foreach ($s in @("auth-service", "catalog-service", "installation-service", "proxy-service")) {
-  cd $s; black app/; cd ..
+  cd $s; if (Test-Path "tests") { pytest tests/ -v }; cd ..
 }
 
-# 2. Check linting
+# 2. Format & lint (see section 2 for details)
 foreach ($s in @("auth-service", "catalog-service", "installation-service", "proxy-service")) {
-  cd $s
-  pylint app/ --max-line-length=100 --disable=C,W0621,W0613,E1101,W0122,R1715,R0903
-  cd ..
+  cd $s; black app/; pylint app/ --max-line-length=100 --disable=C,W0621,W0613,E1101,W0122,R1715,R0903; cd ..
 }
 
-# 3. Verify branch
+# 3. Verify & push
 git branch --show-current  # Should be 'develop'
-
-# 4. Check changes are in correct path
-git status  # Should show files in cat-house-backend/** or frontend/**
-
-# 5. Commit and push
-git add .
-git commit -m "descriptive message"
+git status                 # Changes must be in cat-house-backend/** or frontend/**
 git push origin develop
 
-# 6. Monitor GitHub Actions
-# Open https://github.com/juliangdeveloper/cat-house/actions
-# Wait for Backend CI to start (should appear within 30 seconds)
+# 4. Monitor: https://github.com/juliangdeveloper/cat-house/actions (should start within 30s)
 ```
-
-**If Backend CI doesn't start within 60 seconds → your changes didn't match path filters.**

@@ -9,7 +9,7 @@ The Cat House platform uses comprehensive monitoring and alerting based on:
 - **CloudWatch Logs** for centralized logging with JSON structure
 - **CloudWatch Dashboards** for visualization
 - **CloudWatch Alarms** for proactive alerting
-- **SNS** for alert notifications
+- **SNS + AWS Chatbot** for Slack notifications
 
 ## Quick Links
 
@@ -28,6 +28,22 @@ Access dashboards in AWS Console:
 - `/ecs/cat-house/staging/proxy-service`
 
 ## Available Documentation
+
+### [Slack Integration Guide](./slack-integration-guide.md)
+
+Complete guide for setting up Slack notifications with AWS Chatbot:
+- Why direct webhooks don't work with SNS
+- AWS Chatbot setup (recommended approach)
+- Alternative Lambda-based integration
+- Troubleshooting common issues
+
+### [AWS Chatbot Setup](./aws-chatbot-setup.md)
+
+Quick reference for the configured AWS Chatbot integration:
+- Configuration details and SNS topic ARNs
+- Testing alerts with sample commands
+- Slack commands available
+- Security best practices
 
 ### [CloudWatch Queries](./cloudwatch-queries.md)
 

@@ -9,7 +9,7 @@
       "properties": {
         "title": "User Registrations (Hourly)",
         "metrics": [
-          ["CatHouse/Services", "business_events_total", {"event_type": "user_created", "stat": "Sum"}]
+          ["CatHouse/Services", "business_events_total", "event_type", "user_created"]
         ],
         "period": 3600,
         "region": "sa-east-1",
@@ -25,7 +25,7 @@
       "properties": {
         "title": "Cat Installations (Daily)",
         "metrics": [
-          ["CatHouse/Services", "business_events_total", {"event_type": "installation_created", "stat": "Sum"}]
+          ["CatHouse/Services", "business_events_total", "event_type", "installation_created"]
         ],
         "period": 86400,
         "region": "sa-east-1",
@@ -41,7 +41,7 @@
       "properties": {
         "title": "Active Users (DAU)",
         "metrics": [
-          ["CatHouse/Services", "business_events_total", {"event_type": "user_login", "stat": "Sum"}]
+          ["CatHouse/Services", "business_events_total", "event_type", "user_login"]
         ],
         "period": 86400,
         "region": "sa-east-1",
