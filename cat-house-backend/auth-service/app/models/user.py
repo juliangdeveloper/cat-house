@@ -1,4 +1,4 @@
-﻿"""User model for authentication and user management.
+"""User model for authentication and user management.
 
 Owner: auth-service
 Purpose: Core user authentication, role management, and profile data

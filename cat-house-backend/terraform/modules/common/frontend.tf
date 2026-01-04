@@ -61,8 +61,8 @@ resource "aws_cloudfront_distribution" "frontend" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100" # Use only North America and Europe
 
-  # Custom domain aliases based on environment
-  aliases = var.environment == "staging" ? [var.frontend_domain_staging] : var.environment == "production" ? [var.frontend_domain_production] : []
+  # Custom domain aliases
+  aliases = [var.frontend_domain]
 
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name

@@ -58,3 +58,13 @@ variable "frontend_domain_production" {
 #   - JWT_SECRET: Secret key from secrets.JWT_SECRET  
 #   - ENCRYPTION_KEY: Encryption key from secrets.ENCRYPTION_KEY
 # See .github/workflows/deploy-staging.yml and deploy-production.yml for implementation.
+
+# Monitoring and Alerting
+variable "alert_email" {
+  description = "Email address for CloudWatch alarm notifications (optional)"
+  type        = string
+  default     = ""  # Can be set in terraform.tfvars for email notifications
+}
+
+# Note: Slack notifications are now handled via AWS Chatbot (configured in AWS Console)
+# See docs/monitoring/aws-chatbot-setup.md for setup instructions

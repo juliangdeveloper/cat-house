@@ -1,13 +1,27 @@
-# Terraform
-*.tfstate
-*.tfstate.*
-*.tfvars
-!terraform.tfvars.example
-.terraform/
-.terraform.lock.hcl
+# Terraform state files
+**/*.tfstate
+**/*.tfstate.*
+**/terraform.tfstate.d/
+
+# Terraform plans
+**/tfplan*
+**/.terraform/
+**/.terraform.lock.hcl
+
+# Crash logs
 crash.log
 crash.*.log
+
+# Environment-specific variable files (protect secrets)
+**/*.tfvars
+!**/terraform.tfvars.example
+
+# Override files
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc

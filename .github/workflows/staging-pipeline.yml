@@ -236,6 +236,7 @@ jobs:
       run: |
         SERVICE_NAME=$(echo "${{ matrix.service }}" | sed 's/-service$//')
         
+        # Staging ALB health endpoint (updated after Terraform migration)
         HEALTH_URL="http://cat-house-staging-alb-1968126506.sa-east-1.elb.amazonaws.com/api/v1/${SERVICE_NAME}/health"
         
         echo "Health check URL: $HEALTH_URL"

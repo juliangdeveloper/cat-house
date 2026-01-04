@@ -429,8 +429,11 @@ These services are designed to be deployed on AWS ECS Fargate with:
 - API Gateway for routing
 - Neon Serverless PostgreSQL
 - AWS S3 for assets
-- CloudWatch for logging
+- CloudWatch for logging and monitoring
+- AWS Chatbot for Slack notifications
 - Secrets Manager for credentials
+
+See [docs/monitoring/](docs/monitoring/) for monitoring and alerting setup.
 
 ## Contributing
 

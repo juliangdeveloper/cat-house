@@ -1,4 +1,4 @@
-﻿"""Models for catalog-service.
+"""Models for catalog-service.
 
 This module exports all models owned by catalog-service.
 All models use the shared database defined in base.py.

@@ -1,4 +1,4 @@
-﻿"""Models for auth-service.
+"""Models for auth-service.
 
 This module exports all models owned by auth-service.
 All models use the shared database defined in base.py.

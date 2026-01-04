@@ -110,57 +110,6 @@ resource "aws_ecs_service" "services" {
   ]
 }
 
-# CloudWatch Alarms for Service Health
-resource "aws_cloudwatch_metric_alarm" "service_cpu" {
-  for_each = local.services
-
-  alarm_name          = "cat-house-${var.environment}-${each.key}-cpu"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = "300"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors ECS CPU utilization"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.services[each.key].name
-  }
-
-  tags = {
-    Environment = var.environment
-    Service     = each.key
-    ManagedBy   = "Terraform"
-  }
-}
-
-resource "aws_cloudwatch_metric_alarm" "service_memory" {
-  for_each = local.services
-
-  alarm_name          = "cat-house-${var.environment}-${each.key}-memory"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "MemoryUtilization"
-  namespace           = "AWS/ECS"
-  period              = "300"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors ECS memory utilization"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.services[each.key].name
-  }
-
-  tags = {
-    Environment = var.environment
-    Service     = each.key
-    ManagedBy   = "Terraform"
-  }
-}
-
 # Auto Scaling (Optional - for production)
 # Disabled due to IAM permission issues with ListTagsForResource
 # resource "aws_appautoscaling_target" "ecs_services" {
