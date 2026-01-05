@@ -29,7 +29,7 @@ so that **I can execute Terraform and deploy to AWS in subsequent stories**.
 4. Install AWS CLI locally (verify with: aws --version)
 5. Install Terraform locally (verify with: terraform --version)
 6. Configure AWS credentials locally: aws configure (enter Access Key, Secret Key, Region: us-east-1)
-7. Register domain or configure Route 53 hosted zone for api.gamificator.click
+7. Register domain or configure Route 53 hosted zone for chapi.gamificator.click
 8. Configure GitHub repository secrets (Settings → Secrets and variables → Actions):
    - AWS_ACCESS_KEY_ID
    - AWS_SECRET_ACCESS_KEY
@@ -70,8 +70,8 @@ so that **infrastructure is reproducible, version-controlled, and easy to replic
 3. Create ECR repository resource for Docker images (task-manager-api)
 4. Define ECS Fargate cluster, task definition (0.25 vCPU, 512MB RAM), and service (desired_count: 2)
 5. Configure Application Load Balancer with target group pointing to ECS tasks
-6. Create Route 53 A record for api.gamificator.click pointing to ALB
-7. Request/validate ACM certificate for api.gamificator.click with DNS validation
+6. Create Route 53 A record for chapi.gamificator.click pointing to ALB
+7. Request/validate ACM certificate for chapi.gamificator.click with DNS validation
 8. Configure ALB listener for HTTPS (port 443) using ACM certificate
 8. Configure security groups: ALB allows 443 from internet, ECS tasks allow 8000 from ALB only
 9. Create AWS Secrets Manager secrets for DATABASE_URL, ADMIN_API_KEY, and service API keys (with support for current/previous keys during rotation - post-MVP feature)
@@ -120,7 +120,7 @@ so that **the API is fully functional and accessible from internet with real dat
 4. Update ECS task definition in Terraform to load secrets from Secrets Manager
 5. Run initial database migration via ECS RunTask: alembic upgrade head
 6. Verify database connectivity from ECS task: aws ecs execute-command (test connection)
-7. Test admin endpoint from internet: curl -H "X-API-Key: $ADMIN_KEY" https://api.gamificator.click/admin/keys
+7. Test admin endpoint from internet: curl -H "X-API-Key: $ADMIN_KEY" https://chapi.gamificator.click/admin/keys
 8. Test task creation via command endpoint with valid service key
 9. Document Neon connection details and backup strategy in README
 10. Add migration rollback plan in case of issues
@@ -132,11 +132,11 @@ so that **the API is fully functional and accessible from internet with real dat
 - Migration path: Easy to migrate to RDS later if needed
 
 **Post-Deployment Verification Checklist:**
-- [ ] API health check: curl https://api.gamificator.click/health
-- [ ] Admin endpoint: curl -H "X-API-Key: $ADMIN_KEY" https://api.gamificator.click/admin/keys
-- [ ] Create task: curl -X POST -H "X-API-Key: $SERVICE_KEY" https://api.gamificator.click/cmd/tasks.create -d '{"name":"test"}'
-- [ ] List tasks: curl -H "X-API-Key: $SERVICE_KEY" https://api.gamificator.click/cmd/tasks.list
-- [ ] Get stats: curl -H "X-API-Key: $SERVICE_KEY" https://api.gamificator.click/cmd/stats.get
+- [ ] API health check: curl https://chapi.gamificator.click/health
+- [ ] Admin endpoint: curl -H "X-API-Key: $ADMIN_KEY" https://chapi.gamificator.click/admin/keys
+- [ ] Create task: curl -X POST -H "X-API-Key: $SERVICE_KEY" https://chapi.gamificator.click/cmd/tasks.create -d '{"name":"test"}'
+- [ ] List tasks: curl -H "X-API-Key: $SERVICE_KEY" https://chapi.gamificator.click/cmd/tasks.list
+- [ ] Get stats: curl -H "X-API-Key: $SERVICE_KEY" https://chapi.gamificator.click/cmd/stats.get
 - [ ] Verify HTTPS certificate valid (browser shows padlock)
 - [ ] Check CloudWatch logs for any errors
 

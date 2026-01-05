@@ -12,7 +12,7 @@
                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                   Route 53 DNS (gamificator.click)                   │
-│                  api.gamificator.click → ALB IP                      │
+│                  chapi.gamificator.click → ALB IP                      │
 └──────────────────────────────┬──────────────────────────────────────┘
                                │
                                ▼
@@ -101,7 +101,7 @@
 
 | Component | Purpose | Configuration |
 |-----------|---------|---------------|
-| **Route 53** | DNS management for gamificator.click | A record: api.gamificator.click → ALB |
+| **Route 53** | DNS management for gamificator.click | A record: chapi.gamificator.click → ALB |
 | **ACM** | SSL/TLS certificate | Wildcard cert for *.gamificator.click |
 | **ALB** | Load balancing & SSL termination | Listener: HTTPS (443) → Target Group (8000) |
 | **ECS Cluster** | Container orchestration | Fargate launch type, 2 tasks for HA |
