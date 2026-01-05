@@ -1,11 +1,6 @@
-"""Alembic environment configuration for Auth Service.
+"""Alembic environment configuration for Catalog Service.
 
-Manages auth schema with users table.
-
-Each service now manages its own migrations independently:
-- auth-service: users table in auth schema
-- catalog-service: cats, permissions tables in catalog schema
-- installation-service: installations, installation_permissions tables in installation schema
+Manages catalog schema with cats and permissions tables.
 """
 import os
 import sys
@@ -15,15 +10,17 @@ from pathlib import Path
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Add auth-service to path
-auth_service_path = str(Path(__file__).resolve().parent.parent)
-sys.path.insert(0, auth_service_path)
+# Add catalog-service to path
+catalog_service_path = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, catalog_service_path)
 
 # Import settings
 from app.config import settings
 
 # Import all models - this will register them with Base.metadata
-from app.models.all_models import Base
+from app.models.base import Base
+from app.models.cat import Cat
+from app.models.permission import Permission
 
 # Alembic Config object
 config = context.config
@@ -35,7 +32,7 @@ if config.config_file_name is not None:
 # Set target metadata for autogenerate
 target_metadata = Base.metadata
 
-print(f"\nRegistered tables: {list(Base.metadata.tables.keys())}\n")
+print(f"\n[Catalog Service] Registered tables: {list(Base.metadata.tables.keys())}\n")
 
 def get_url():
     """Get database URL for migrations.
@@ -53,16 +50,7 @@ def get_url():
     return url
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well. By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-    """
+    """Run migrations in 'offline' mode."""
     url = get_url()
     context.configure(
         url=url,
@@ -71,19 +59,14 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        version_table_schema="catalog",
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-    
-    Uses NullPool for migrations (no connection pooling needed).
-    """
+    """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section)
     configuration['sqlalchemy.url'] = get_url()
     
@@ -98,8 +81,9 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            compare_type=True,              # Detect type changes
-            compare_server_default=True,    # Detect default changes
+            compare_type=True,
+            compare_server_default=True,
+            version_table_schema="catalog",
         )
 
         with context.begin_transaction():

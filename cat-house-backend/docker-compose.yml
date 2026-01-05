@@ -1,10 +1,32 @@
 ﻿version: '3.8'
 
-# NOTE: This docker-compose.yml does NOT include a local PostgreSQL service.
-# All services connect to Neon PostgreSQL (serverless).
-# Set DATABASE_URL in .env file for each service.
+# Local Development Setup
+# This docker-compose includes PostgreSQL and nginx for complete local development.
+# For cloud-only development, use .env with Neon DATABASE_URL.
+# For local development, use .env.local with postgres://catuser:catpass@postgres:5432/cathouse
 
 services:
+  # PostgreSQL Database (for local development)
+  postgres:
+    image: postgres:17-alpine
+    container_name: cathouse-postgres
+    environment:
+      POSTGRES_USER: catuser
+      POSTGRES_PASSWORD: catpass
+      POSTGRES_DB: cathouse
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - cathouse-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catuser -d cathouse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
   # Auth Service
   auth-service:
     build:
@@ -14,11 +36,14 @@ services:
     ports:
       - "8005:8005"
     env_file:
-      - ./auth-service/.env
+      - ./auth-service/.env.local
     volumes:
       - ./auth-service/app:/app/app:ro
     networks:
       - cathouse-network
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   # Catalog Service
@@ -30,11 +55,14 @@ services:
     ports:
       - "8002:8002"
     env_file:
-      - ./catalog-service/.env
+      - ./catalog-service/.env.local
     volumes:
       - ./catalog-service/app:/app/app:ro
     networks:
       - cathouse-network
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   # Installation Service
@@ -46,11 +74,14 @@ services:
     ports:
       - "8003:8003"
     env_file:
-      - ./installation-service/.env
+      - ./installation-service/.env.local
     volumes:
       - ./installation-service/app:/app/app:ro
     networks:
       - cathouse-network
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   # Proxy Service
@@ -62,11 +93,14 @@ services:
     ports:
       - "8004:8004"
     env_file:
-      - ./proxy-service/.env
+      - ./proxy-service/.env.local
     volumes:
       - ./proxy-service/app:/app/app:ro
     networks:
       - cathouse-network
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   # Health Aggregator Service
@@ -88,10 +122,38 @@ services:
       - proxy-service
     restart: unless-stopped
 
+  # Nginx API Gateway (for local development)
+  nginx:
+    image: nginx:alpine
+    container_name: cathouse-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - cathouse-network
+    depends_on:
+      - auth-service
+      - catalog-service
+      - installation-service
+      - proxy-service
+      - health-aggregator
+    restart: unless-stopped
+
 networks:
   cathouse-network:
     driver: bridge
 
-# API Gateway is now handled by AWS API Gateway
-# See terraform/ directory for infrastructure as code configuration
-# All services must be publicly accessible for API Gateway integration
+volumes:
+  postgres_data:
+    driver: local
+
+# Local Development:
+# - Use .env.local files with DATABASE_URL=postgresql+asyncpg://catuser:catpass@postgres:5432/cathouse
+# - Access API via http://localhost:8080/api
+# - Run migrations: docker-compose exec auth-service alembic upgrade head
+#
+# Cloud Development (Staging/Production):
+# - Infrastructure managed by AWS (ECS, ALB, RDS/Neon)
+# - See terraform/ directory for infrastructure as code
+# - CI/CD via GitHub Actions (.github/workflows/staging-pipeline.yml)

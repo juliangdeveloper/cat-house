@@ -1,19 +1,40 @@
 # Cat House - Deployment Guide
 
-**Last Updated:** December 31, 2025  
+**Last Updated:** January 5, 2026  
 **Story Reference:** [Story 1.5 - CI/CD Pipeline Setup](../stories/1.5.cicd-pipeline-setup.md)
+
+**⚠️ Important:** This guide is for **Staging and Production** deployments only.  
+For **local development**, see [Local Development Guide](./local-development-guide.md).
 
 ---
 
 ## Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [GitHub Configuration](#github-configuration)
-3. [AWS Infrastructure Setup](#aws-infrastructure-setup)
-4. [Terraform Deployment](#terraform-deployment)
-5. [First Deployment](#first-deployment)
-6. [Verification & Testing](#verification--testing)
-7. [Troubleshooting](#troubleshooting)
+1. [Overview](#overview)
+2. [Prerequisites](#prerequisites)
+3. [GitHub Configuration](#github-configuration)
+4. [AWS Infrastructure Setup](#aws-infrastructure-setup)
+5. [Terraform Deployment](#terraform-deployment)
+6. [First Deployment](#first-deployment)
+7. [Verification & Testing](#verification--testing)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## Overview
+
+### Deployment Environments
+
+| Environment | Purpose | Database | Infrastructure | Access |
+|-------------|---------|----------|----------------|--------|
+| **Local** | Development | PostgreSQL (Docker) | Docker Compose | [Local Guide](./local-development-guide.md) |
+| **Staging** | Pre-production testing | Neon (staging branch) | AWS ECS + ALB | https://chs.gamificator.click |
+| **Production** | Live application | Neon (production branch) | AWS ECS + ALB | https://api.gamificator.click |
+
+**Workflow:**
+```
+Local Development → PR to develop → Staging (automatic) → PR to main → Production (manual approval)
+```
 
 ---
 
@@ -111,6 +132,10 @@ aws sts get-caller-identity
 ```
 
 **Note:** Database credentials, JWT secrets, and encryption keys are managed via GitHub Secrets and injected during deployment. No AWS Secrets Manager configuration required.
+
+**Environment-Specific Configuration:**
+- **Local Development:** Uses `.env.local` files with local PostgreSQL (see [Local Development Guide](./local-development-guide.md))
+- **Staging/Production:** Uses GitHub Secrets injected into ECS task definitions during CI/CD
 
 ---
 
@@ -226,19 +251,40 @@ Push to develop → Test (4 services) → Build → Migrate → Deploy Backend �
 El pipeline consolidado `staging-pipeline.yml` maneja todo automáticamente:
 
 ```powershell
-# Push to develop branch triggers full pipeline
-git checkout develop
+# Workflow: Local → Staging → Production
+
+# 1. Develop locally (see local-development-guide.md)
+cd cat-house-backend
+docker-compose up -d
+# Make changes, test locally
+
+# 2. Commit and push to feature branch
+git checkout -b feature/new-feature
 git add .
-git commit -m "Deploy to staging"
+git commit -m "feat: add new feature"
+git push origin feature/new-feature
+
+# 3. Create PR to develop
+# → GitHub Actions runs tests with NEON_TEST_DATABASE_URL
+
+# 4. Merge to develop
+# → Triggers automatic deployment to staging
+git checkout develop
+git merge feature/new-feature
 git push origin develop
 ```
 
 **Pipeline ejecuta:**
-1. **Test:** pytest + black + pylint en 4 servicios
+1. **Test:** pytest + black + pylint en 4 servicios (usa `.env` generado con NEON_TEST_DATABASE_URL)
 2. **Build:** Docker images → ECR con tags :staging y :sha
-3. **Migrate:** Alembic migrations en auth-service
-4. **Deploy Backend:** 4 servicios a ECS con secrets injection
-5. **Deploy Frontend:** Expo web → S3 → CloudFront invalidation
+3. **Migrate:** Alembic migrations en auth-service (usa NEON_STAGING_DATABASE_URL)
+4. **Deploy Backend:** 4 servicios a ECS con secrets injection (GitHub Secrets → ECS task env vars)
+5. **Deploy Frontend:** Expo web → S3 → CloudFront invalidation (con EXPO_PUBLIC_API_URL cloud)
+
+**Important:** 
+- Local development usa `.env.local` (PostgreSQL local, localhost:8080)
+- CI/CD usa GitHub Secrets (Neon cloud, AWS endpoints)
+- **NO hay overlap** - ambos funcionan independientemente
 
 ### Production Deployment
 
@@ -407,6 +453,11 @@ aws cloudfront create-invalidation `
    - Set up SNS notifications
    - Enable X-Ray tracing
 
+2. **Local Development Environment:**
+   - Follow [Local Development Guide](./local-development-guide.md)
+   - Set up PostgreSQL + nginx locally
+   - Test changes before deploying to staging
+
 3. **Production Deployment:**
    - Repeat Terraform deployment with `environment = "production"`
    - Configure production branch protection
@@ -447,8 +498,22 @@ terraform state list
 
 ---
 
+## Environment Comparison
+
+| Aspect | Local Development | Staging | Production |
+|--------|------------------|---------|------------|
+| **Database** | PostgreSQL (Docker) | Neon (staging branch) | Neon (main branch) |
+| **API Gateway** | nginx (:8080) | AWS API Gateway + ALB | AWS API Gateway + ALB |
+| **Frontend** | Expo Dev (:8081) | S3 + CloudFront | S3 + CloudFront |
+| **Config** | `.env.local` files | GitHub Secrets → ECS | GitHub Secrets → ECS |
+| **Deployment** | `docker-compose up` | Auto on push to develop | Manual approval |
+| **Guide** | [local-development-guide.md](./local-development-guide.md) | This guide | This guide |
+
+---
+
 ## Support & Resources
 
+- **Local Development:** [Local Development Guide](./local-development-guide.md)
 - **GitHub Repository:** https://github.com/juliangdeveloper/cat-house
 - **Story 1.5:** [CI/CD Pipeline Setup](../stories/1.5.cicd-pipeline-setup.md)
 - **AWS Console:** https://console.aws.amazon.com/

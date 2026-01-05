@@ -28,12 +28,16 @@ class Cat(Base, BaseModel):
     """
 
     __tablename__ = "cats"
+    __table_args__ = (
+        Index("ix_cats_status", "status"),
+        Index("ix_cats_developer_status", "developer_id", "status"),
+        {"schema": "catalog"},
+    )
 
     developer_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
-        comment="Cat developer (FK to users.id)",
+        comment="Cat developer (logical reference to auth.users.id - validated at application level)",
     )
 
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="Cat name")

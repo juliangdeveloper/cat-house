@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,19 +25,22 @@ class InstallationPermission(Base):
     """
 
     __tablename__ = "installation_permissions"
+    __table_args__ = (
+        Index("ix_installation_permissions_inst_perm", "installation_id", "permission_id"),
+        {"schema": "installation"},
+    )
 
     installation_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("installations.id", ondelete="CASCADE"),
         nullable=False,
-        comment="Installation reference (FK to installations.id)",
+        comment="Installation reference (FK to installations.id within installation schema)",
     )
 
     permission_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("permissions.id", ondelete="CASCADE"),
         nullable=False,
-        comment="Permission reference (FK to permissions.id)",
+        comment="Permission reference (logical reference to catalog.permissions.id - validated at application level)",
     )
 
     granted: Mapped[bool] = mapped_column(

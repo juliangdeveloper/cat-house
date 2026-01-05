@@ -32,10 +32,10 @@ app.middleware("http")(correlation_id_middleware)
 
 # Service endpoints to check
 SERVICES = {
-    "auth": "http://cathouse-auth:8005/health",
-    "catalog": "http://cathouse-catalog:8002/health",
-    "installation": "http://cathouse-installation:8003/health",
-    "proxy": "http://cathouse-proxy:8004/health"
+    "auth": "http://cathouse-auth:8005/api/v1/auth/health",
+    "catalog": "http://cathouse-catalog:8002/api/v1/catalog/health",
+    "installation": "http://cathouse-installation:8003/api/v1/installation/health",
+    "proxy": "http://cathouse-proxy:8004/api/v1/proxy/health"
 }
 
 async def check_service(client: httpx.AsyncClient, name: str, url: str) -> Dict[str, Any]:
@@ -82,7 +82,7 @@ async def check_service(client: httpx.AsyncClient, name: str, url: str) -> Dict[
             "response_time_ms": None
         }
 
-@app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
     """
     Aggregate health check endpoint.

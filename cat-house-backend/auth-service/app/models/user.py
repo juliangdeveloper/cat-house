@@ -26,6 +26,7 @@ class User(Base, BaseModel):
     """
 
     __tablename__ = "users"
+    __table_args__ = {"schema": "auth"}
 
     email: Mapped[str] = mapped_column(
         String(255),

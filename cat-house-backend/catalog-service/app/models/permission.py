@@ -27,12 +27,16 @@ class Permission(Base, BaseModel):
     """
 
     __tablename__ = "permissions"
+    __table_args__ = (
+        Index("ix_permissions_cat_type", "cat_id", "permission_type"),
+        {"schema": "catalog"},
+    )
 
     cat_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("cats.id", ondelete="CASCADE"),
         nullable=False,
-        comment="Associated cat (FK to cats.id)",
+        comment="Associated cat (FK to cats.id within catalog schema)",
     )
 
     permission_type: Mapped[str] = mapped_column(

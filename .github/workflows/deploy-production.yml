@@ -38,11 +38,25 @@ jobs:
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
         ENVIRONMENT: production
-      working-directory: cat-house-backend/auth-service
       run: |
         echo "Running database migrations for production..."
         echo "Version: ${{ github.event.inputs.version }}"
         
+        # Auth service migrations (auth schema)
+        echo "[1/3] Running auth-service migrations..."
+        cd cat-house-backend/auth-service
+        pip install -r requirements.txt alembic
+        alembic upgrade head
+        
+        # Catalog service migrations (catalog schema)
+        echo "[2/3] Running catalog-service migrations..."
+        cd ../catalog-service
+        pip install -r requirements.txt alembic
+        alembic upgrade head
+        
+        # Installation service migrations (installation schema)
+        echo "[3/3] Running installation-service migrations..."
+        cd ../installation-service
         pip install -r requirements.txt alembic
         alembic upgrade head
         

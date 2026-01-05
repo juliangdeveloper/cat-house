@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # Database (Shared Neon PostgreSQL)
     database_url: str
+    migration_database_url: str | None = None  # For Alembic migrations (sync driver)
 
     # Connection pooling
     pool_size: int = 2

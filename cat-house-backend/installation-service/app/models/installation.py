@@ -30,19 +30,22 @@ class Installation(Base, BaseModel):
     """
 
     __tablename__ = "installations"
+    __table_args__ = (
+        Index("ix_installations_user_status", "user_id", "status"),
+        Index("ix_installations_last_interaction", "last_interaction_at"),
+        {"schema": "installation"},
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
-        comment="Cat owner (FK to users.id)",
+        comment="Cat owner (logical reference to auth.users.id - validated at application level)",
     )
 
     cat_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("cats.id", ondelete="RESTRICT"),
         nullable=False,
-        comment="Installed cat (FK to cats.id)",
+        comment="Installed cat (logical reference to catalog.cats.id - validated at application level)",
     )
 
     instance_name: Mapped[Optional[str]] = mapped_column(
