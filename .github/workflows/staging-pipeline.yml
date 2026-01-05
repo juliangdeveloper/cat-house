@@ -271,7 +271,7 @@ jobs:
     - name: Build frontend static export
       working-directory: frontend
       env:
-        EXPO_PUBLIC_API_URL: https://api-staging.gamificator.click
+        EXPO_PUBLIC_API_URL: https://chapi-staging.gamificator.click
       run: |
         npm install --legacy-peer-deps
         npx expo export --platform web

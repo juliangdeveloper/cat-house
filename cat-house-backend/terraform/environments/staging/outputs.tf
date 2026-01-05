@@ -37,3 +37,8 @@ output "frontend_url" {
   description = "Custom frontend URL"
   value       = "https://chs.gamificator.click"
 }
+
+output "backend_api_url" {
+  description = "Custom backend API URL"
+  value       = module.infrastructure.backend_api_url
+}

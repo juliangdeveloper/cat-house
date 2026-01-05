@@ -46,6 +46,11 @@ variable "frontend_domain" {
   type        = string
 }
 
+variable "api_domain" {
+  description = "Custom domain for backend API (e.g., chapi.gamificator.click)"
+  type        = string
+}
+
 variable "alert_email" {
   description = "Email address for CloudWatch alarm notifications"
   type        = string

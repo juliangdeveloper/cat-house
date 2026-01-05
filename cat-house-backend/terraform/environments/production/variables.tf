@@ -37,6 +37,12 @@ variable "frontend_domain_production" {
   default     = "chapp.gamificator.click"
 }
 
+variable "api_domain_production" {
+  description = "Production backend API domain"
+  type        = string
+  default     = "chapi.gamificator.click"
+}
+
 variable "alert_email" {
   description = "Email for CloudWatch alarms"
   type        = string

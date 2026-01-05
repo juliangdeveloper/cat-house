@@ -191,7 +191,7 @@ curl $API_URL/api/v1/proxy/health
 ```bash
 # Request certificate in AWS Certificate Manager
 aws acm request-certificate \
-  --domain-name api.gamificator.click \
+  --domain-name chapi.gamificator.click \
   --validation-method DNS \
   --region us-east-1
 
@@ -210,7 +210,7 @@ Uncomment custom domain section in `main.tf`:
 
 ```hcl
 resource "aws_api_gateway_domain_name" "api" {
-  domain_name              = "api.gamificator.click"
+  domain_name              = "chapi.gamificator.click"
   regional_certificate_arn = var.certificate_arn
 
   endpoint_configuration {
@@ -243,7 +243,7 @@ Create CNAME record:
 
 ```
 Type: CNAME
-Name: api.gamificator.click
+Name: chapi.gamificator.click
 Value: abc123def4.execute-api.us-east-1.amazonaws.com
 TTL: 300
 ```

@@ -37,6 +37,12 @@ variable "frontend_domain_staging" {
   default     = "chs.gamificator.click"
 }
 
+variable "api_domain_staging" {
+  description = "Staging backend API domain"
+  type        = string
+  default     = "chapi-staging.gamificator.click"
+}
+
 variable "alert_email" {
   description = "Email for CloudWatch alarms"
   type        = string

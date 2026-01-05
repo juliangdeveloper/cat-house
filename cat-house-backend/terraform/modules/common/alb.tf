@@ -115,11 +115,33 @@ resource "aws_lb_target_group" "services" {
   }
 }
 
-# HTTP Listener
+# HTTP Listener - Redirect all HTTP traffic to HTTPS
+# AWS Best Practice: Always use HTTPS for production traffic
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301" # Permanent redirect
+    }
+  }
+}
+
+# HTTPS Listener
+# Using TLS 1.3 policy for maximum security
+# Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06" # TLS 1.3 recommended policy
+  certificate_arn   = var.certificate_arn
 
   # Default action - return 404
   default_action {
@@ -205,7 +227,7 @@ resource "aws_lb_listener_rule" "proxy" {
   }
 }
 
-# Health endpoint - return aggregated health from ALB target groups
+# Health endpoint - return aggregated health from ALB target groups (HTTP - will redirect to HTTPS)
 resource "aws_lb_listener_rule" "health" {
   listener_arn = aws_lb_listener.http.arn
   priority     = 50 # Higher priority to catch /health before other rules
@@ -225,6 +247,100 @@ resource "aws_lb_listener_rule" "health" {
   condition {
     path_pattern {
       values = ["/health", "/api/v1/health"]
+    }
+  }
+}
+
+# HTTPS Listener Rules - All production traffic goes through HTTPS
+
+# Health endpoint (HTTPS)
+resource "aws_lb_listener_rule" "health_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 50
+
+  action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "application/json"
+      message_body = jsonencode({
+        status  = "healthy"
+        message = "ALB is operational. Check individual service health endpoints."
+      })
+      status_code = "200"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/health", "/api/v1/health"]
+    }
+  }
+}
+
+# Auth Service (HTTPS)
+resource "aws_lb_listener_rule" "auth_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.services["auth-service"].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/v1/auth/*"]
+    }
+  }
+}
+
+# Catalog Service (HTTPS)
+resource "aws_lb_listener_rule" "catalog_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 200
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.services["catalog-service"].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/v1/catalog/*"]
+    }
+  }
+}
+
+# Installation Service (HTTPS)
+resource "aws_lb_listener_rule" "installation_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 300
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.services["installation-service"].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/v1/installation/*"]
+    }
+  }
+}
+
+# Proxy Service (HTTPS)
+resource "aws_lb_listener_rule" "proxy_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 400
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.services["proxy-service"].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/v1/proxy/*"]
     }
   }
 }

@@ -39,5 +39,6 @@ module "infrastructure" {
   app_prefix                 = var.app_prefix
   hosted_zone_id             = var.hosted_zone_id
   frontend_domain            = var.frontend_domain_production
+  api_domain                 = var.api_domain_production
   alert_email                = var.alert_email
 }

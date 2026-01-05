@@ -107,16 +107,16 @@ Each service exposes a `/metrics` endpoint:
 
 ```bash
 # Auth Service
-curl https://api.gamificator.click/api/v1/auth/metrics
+curl https://chapi.gamificator.click/api/v1/auth/metrics
 
 # Catalog Service
-curl https://api.gamificator.click/api/v1/catalog/metrics
+curl https://chapi.gamificator.click/api/v1/catalog/metrics
 
 # Installation Service
-curl https://api.gamificator.click/api/v1/installation/metrics
+curl https://chapi.gamificator.click/api/v1/installation/metrics
 
 # Proxy Service
-curl https://api.gamificator.click/api/v1/proxy/metrics
+curl https://chapi.gamificator.click/api/v1/proxy/metrics
 ```
 
 ### CloudWatch Logs

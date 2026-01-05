@@ -173,7 +173,7 @@ curl https://your-api-gateway-url/api/v1/catalog/health
 
 ### Custom Domain (Optional)
 
-To use a custom domain (e.g., `api.gamificator.click`):
+To use a custom domain (e.g., `chapi.gamificator.click`):
 
 1. Request an ACM certificate in AWS Certificate Manager
 2. Uncomment the custom domain section in `main.tf`
@@ -181,7 +181,7 @@ To use a custom domain (e.g., `api.gamificator.click`):
 4. Apply changes: `terraform apply`
 5. Create a CNAME record in your DNS:
    ```
-   api.gamificator.click → xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
+   chapi.gamificator.click → xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
    ```
 
 ## Monitoring

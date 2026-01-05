@@ -82,7 +82,7 @@ Test health check manually:
 
 ```bash
 # If ALB is accessible
-curl -v https://api.gamificator.click/api/v1/auth/health
+curl -v https://chapi.gamificator.click/api/v1/auth/health
 
 # Check health target group in ALB
 aws elbv2 describe-target-health \
@@ -248,10 +248,10 @@ watch -n 5 'aws ecs describe-services \
   --query "services[0].runningCount"'
 
 # Test health endpoint
-curl -v https://api.gamificator.click/api/v1/auth/health
+curl -v https://chapi.gamificator.click/api/v1/auth/health
 
 # Check metrics endpoint
-curl https://api.gamificator.click/api/v1/auth/metrics
+curl https://chapi.gamificator.click/api/v1/auth/metrics
 ```
 
 ## Escalation
