@@ -1,6 +1,5 @@
 # Cat House - Interface Requirements
 
-**Status:** Approved  
 **Created:** November 30, 2025  
 **Document Type:** Interface Specifications
 
@@ -51,6 +50,7 @@ This document defines all user-facing interfaces required for Cat House platform
 
 **Core Functions:**
 - Edit profile information
+- Activate Developer Role
 - Manage authentication credentials
 - View and revoke granted permissions per cat
 - Configure notification preferences

@@ -1,6 +1,5 @@
 # Cat House Platform - Product Requirements Document (PRD)
 
-**Status:** Draft - In Development  
 **Created:** November 21, 2025  
 **Document Type:** Executive-Level Requirements
 
@@ -14,8 +13,8 @@
 - [Interface Requirements](interface-requirements.md)
 - [Architecture](architecture.md)
 - [Epic List](epic-list.md)
+- [UX Guide (AI Agents)](ux-guide.md)
 
 ---
-
 **Document Owner:** Sarah (Product Owner Agent)  
 **Last Updated:** December 31, 2025

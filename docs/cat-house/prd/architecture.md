@@ -1,6 +1,6 @@
 # Cat House Platform - System Architecture
 
-**Status:** Deployed | **Created:** November 30, 2025 | **Version:** 2.0 | **Last Updated:** December 31, 2025
+**Created:** November 30, 2025 | **Version:** 2.0 | **Last Updated:** December 31, 2025
 
 ---
 
