@@ -7,7 +7,7 @@ Purpose: Cat definition, versioning, and publication status
 import uuid
 from typing import Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy import Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 

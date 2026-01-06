@@ -26,7 +26,9 @@ class InstallationPermission(Base):
 
     __tablename__ = "installation_permissions"
     __table_args__ = (
-        Index("ix_installation_permissions_inst_perm", "installation_id", "permission_id"),
+        Index(
+            "ix_installation_permissions_inst_perm", "installation_id", "permission_id"
+        ),
         {"schema": "installation"},
     )
 

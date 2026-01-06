@@ -2,7 +2,7 @@
 
 Each service manages its own migrations independently:
 - auth-service: users table in auth schema
-- catalog-service: cats, permissions tables in catalog schema  
+- catalog-service: cats, permissions tables in catalog schema
 - installation-service: installations, installation_permissions tables in installation schema
 
 This follows true microservice architecture where each service owns its database schema.
@@ -20,5 +20,3 @@ __all__ = [
     "BaseModel",
     "User",
 ]
-
-

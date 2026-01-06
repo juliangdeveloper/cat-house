@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     # Database (Shared Neon PostgreSQL)
     database_url: str
-    migration_database_url: str | None = None  # For Alembic migrations (sync driver)
+    migration_database_url: Optional[str] = None  # For Alembic migrations (sync driver)
 
     # Connection pooling
     pool_size: int = 2
