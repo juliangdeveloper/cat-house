@@ -100,28 +100,33 @@ docker-compose down
 
 ## Database Management
 
-**Migration Architecture:** Each service manages its own schema independently.
+**Architecture:** Multi-schema PostgreSQL database. Each service manages its own schema independently.
 
 **Schemas:**
-- `auth` → auth-service (users table)
-- `catalog` → catalog-service (cats, permissions tables)
-- `installation` → installation-service (installations, installation_permissions tables)
+- `auth` → users, alembic_version
+- `catalog` → cats, permissions, alembic_version
+- `installation` → installations, installation_permissions, alembic_version
+- `proxy` → (reserved for future use)
 
-**Migraciones:**
+**Initial Setup:**
 ```powershell
-.\scripts\init-local-db.ps1              # Aplicar todas (auth + catalog + installation)
-.\scripts\generate-migrations.ps1        # Generar nuevas en cada servicio
-.\scripts\reset-and-migrate.ps1          # Reset completo (⚠️ borra datos)
+.\scripts\init-local-db.ps1  # Creates schemas + runs migrations for all 3 services
 ```
 
-**Generar migración para servicio específico:**
+The script automatically:
+1. Creates database schemas if they don't exist
+2. Runs migrations in order: auth → catalog → installation
+3. Verifies all core tables were created successfully
+
+**Generate New Migration:**
 ```powershell
 cd cat-house-backend/auth-service
 docker-compose exec -T auth-service alembic revision --autogenerate -m "Add column"
+```
 
-# O para catalog-service:
-cd cat-house-backend/catalog-service
-docker-compose exec -T catalog-service alembic revision --autogenerate -m "Add table"
+**Reset Database:**
+```powershell
+.\scripts\reset-and-migrate.ps1  # ⚠️ Deletes all data and reapplies migrations
 ```
 
 **Inspeccionar:**

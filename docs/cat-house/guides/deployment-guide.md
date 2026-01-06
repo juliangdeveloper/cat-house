@@ -275,16 +275,19 @@ git push origin develop
 ```
 
 **Pipeline ejecuta:**
-1. **Test:** pytest + black + pylint en 4 servicios (usa `.env` generado con NEON_TEST_DATABASE_URL)
+1. **Test:** pytest + black + pylint en 4 servicios (usa NEON_TEST_DATABASE_URL)
 2. **Build:** Docker images → ECR con tags :staging y :sha
-3. **Migrate:** Alembic migrations en auth-service (usa NEON_STAGING_DATABASE_URL)
-4. **Deploy Backend:** 4 servicios a ECS con secrets injection (GitHub Secrets → ECS task env vars)
-5. **Deploy Frontend:** Expo web → S3 → CloudFront invalidation (con EXPO_PUBLIC_API_URL cloud)
+3. **Migrate:** 
+   - Creates database schemas (auth, catalog, installation, proxy) if needed
+   - Runs Alembic migrations for 3 services: auth → catalog → installation
+   - Verifies schema integrity (checks core tables exist)
+   - Uses NEON_STAGING_DATABASE_URL
+4. **Deploy Backend:** 4 servicios a ECS con secrets injection
+5. **Deploy Frontend:** Expo web → S3 → CloudFront invalidation
 
-**Important:** 
-- Local development usa `.env.local` (PostgreSQL local, localhost:8080)
-- CI/CD usa GitHub Secrets (Neon cloud, AWS endpoints)
-- **NO hay overlap** - ambos funcionan independientemente
+**Environment Separation:** 
+- **Local:** `.env.local` files → PostgreSQL Docker → localhost
+- **Staging/Production:** GitHub Secrets → Neon Database → AWS cloud
 
 ### Production Deployment
 
@@ -297,19 +300,6 @@ git push origin main
 # 2. Manually trigger production deployment
 # Go to: https://github.com/juliangdeveloper/cat-house/actions
 # Run: deploy-production.yml (requires approval)
-```
-
-### Manual Database Migration (if needed)
-
-```powershell
-# Migrations run automatically via GitHub Actions
-# Manual execution (solo si es necesario):
-aws ecs run-task `
-  --cluster cat-house-staging `
-  --task-definition cat-house-staging-auth-service `
-  --launch-type FARGATE `
-  --overrides '{"containerOverrides":[{"name":"auth-service","command":["alembic","upgrade","head"]}]}' `
-  --region sa-east-1
 ```
 
 ---
