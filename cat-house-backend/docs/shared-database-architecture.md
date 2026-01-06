@@ -35,15 +35,26 @@ Cat House backend uses a **single shared Neon PostgreSQL database** (cathouse) a
 
 ### Migration Management
 
-**Single Source of Truth:** Only uth-service contains Alembic configuration and runs migrations.
+**Multi-Service Architecture:** Each service manages its own schema migrations independently.
+
+**Service-Specific Migrations:**
+
+| Service | Schema | Alembic Config | Tables |
+|---------|--------|----------------|--------|
+| auth-service | auth | auth-service/alembic/ | users |
+| catalog-service | catalog | catalog-service/alembic/ | cats, permissions |
+| installation-service | installation | installation-service/alembic/ | installations, installation_permissions |
 
 **Workflow:**
-1. Developer creates models in appropriate service
-2. Import all models into auth-service migrations
-3. Generate migration in auth-service: \lembic revision --autogenerate\
-4. Review and test migration
-5. Apply migration from auth-service: \lembic upgrade head\
-6. All services see updated schema immediately
+1. Developer creates/modifies models in appropriate service
+2. Generate migration in that service: `cd <service> && alembic revision --autogenerate -m "description"`
+3. Review and test migration
+4. Apply migrations sequentially:
+   - Local: Run `./scripts/init-local-db.ps1` or `./scripts/init-local-db.sh`
+   - CI/CD: GitHub Actions runs all three migrations automatically
+5. Each service sees its own schema immediately
+
+**Migration Execution Order:** auth-service → catalog-service → installation-service
 
 ## Connection Configuration
 
@@ -187,9 +198,15 @@ async def db_health(db: AsyncSession = Depends(get_db)):
 ### Migration Issues
 
 **\"Relation already exists\"**
-- Ensure only auth-service runs migrations
-- Use lembic stamp head to mark current state
-- Never run migrations from multiple services
+- Ensure each service only manages its own schema
+- Use `alembic stamp head` to mark current state in specific service
+- Each service has its own Alembic version table in its schema
+
+**"Migration failed in CI/CD"**
+- Check GitHub Actions workflow logs for specific service failure
+- Automatic rollback will execute if migration fails
+- Slack notifications sent to #aws-alerts channel
+- Verify all three services completed migrations successfully
 
 ## References
 

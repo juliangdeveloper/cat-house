@@ -65,8 +65,13 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-if ($LASTEXITCODE -eq 0) {
+# Verify migrations succeeded
+Write-Host "Verifying schema integrity..." -ForegroundColor Cyan
+$schemaCheck = docker-compose exec -T postgres psql -U catuser -d cathouse -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema IN ('auth', 'catalog', 'installation') AND table_name IN ('users', 'cats', 'installations');"
+
+if ($schemaCheck -match '^\s*[3-9]\d*\s*$') {
     Write-Host "Database migrations completed successfully!" -ForegroundColor Green
+    Write-Host "Schema verification passed: All core tables exist" -ForegroundColor Green
     Write-Host ""
     Write-Host "Local database is ready for development!" -ForegroundColor Green
     Write-Host ""
@@ -80,6 +85,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "DATABASE_URL for services:" -ForegroundColor Cyan
     Write-Host "  postgresql+asyncpg://catuser:catpass@postgres:5432/cathouse" -ForegroundColor White
 } else {
-    Write-Host "Migration failed. Check logs with: docker-compose logs auth-service" -ForegroundColor Red
+    Write-Host "Schema verification failed: Expected 3+ core tables, found $schemaCheck" -ForegroundColor Red
+    Write-Host "Run: docker-compose logs auth-service catalog-service installation-service" -ForegroundColor Red
     exit 1
 }

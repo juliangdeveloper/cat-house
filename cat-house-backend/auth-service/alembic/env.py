@@ -35,6 +35,10 @@ if config.config_file_name is not None:
 # Set target metadata for autogenerate
 target_metadata = Base.metadata
 
+# Store Alembic version table in auth schema for consistency
+# (catalog-service uses 'catalog' schema, installation-service uses 'installation' schema)
+version_table_schema = "auth"
+
 print(f"\nRegistered tables: {list(Base.metadata.tables.keys())}\n")
 
 def get_url():
@@ -71,6 +75,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        version_table_schema=version_table_schema,
     )
 
     with context.begin_transaction():
@@ -100,6 +105,7 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,              # Detect type changes
             compare_server_default=True,    # Detect default changes
+            version_table_schema=version_table_schema,
         )
 
         with context.begin_transaction():

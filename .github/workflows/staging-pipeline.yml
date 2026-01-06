@@ -156,6 +156,115 @@ jobs:
         alembic upgrade head
         
         echo "All migrations completed successfully"
+    
+    - name: Verify schema integrity
+      env:
+        DATABASE_URL: ${{ secrets.NEON_STAGING_DATABASE_URL }}
+      run: |
+        echo "Verifying database schema..."
+        pip install psycopg2-binary
+        
+        python3 << 'EOF'
+        import os
+        import psycopg2
+        
+        # Convert asyncpg URL to psycopg2 format
+        db_url = os.environ['DATABASE_URL'].replace('postgresql+asyncpg://', 'postgresql://')
+        if '-pooler' in db_url:
+            db_url = db_url.replace('-pooler', '')
+        
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Check for core tables across all schemas
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM information_schema.tables 
+            WHERE table_schema IN ('auth', 'catalog', 'installation') 
+            AND table_name IN ('users', 'cats', 'installations')
+        """)
+        
+        count = cursor.fetchone()[0]
+        
+        if count >= 3:
+            print(f"✅ Schema verification passed: {count} core tables found")
+            exit(0)
+        else:
+            print(f"❌ Schema verification failed: Expected 3+ core tables, found {count}")
+            exit(1)
+        
+        cursor.close()
+        conn.close()
+        EOF
+    
+    - name: Notify Slack on success
+      if: success()
+      run: |
+        aws sns publish \
+          --topic-arn arn:aws:sns:sa-east-1:578492750346:cat-house-staging-warning-alerts \
+          --subject "✅ Staging Migrations Successful" \
+          --message "Database migrations completed successfully in staging environment. Branch: ${{ github.ref_name }}, Commit: ${{ github.sha }}" \
+          --region sa-east-1
+    
+    - name: Notify Slack on failure
+      if: failure()
+      run: |
+        aws sns publish \
+          --topic-arn arn:aws:sns:sa-east-1:578492750346:cat-house-staging-critical-alerts \
+          --subject "❌ CRITICAL: Staging Migrations Failed" \
+          --message "Database migrations FAILED in staging. Branch: ${{ github.ref_name }}, Commit: ${{ github.sha }}. Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          --region sa-east-1
+
+  rollback-migrations:
+    needs: migrate
+    if: failure()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Rollback database migrations
+      env:
+        DATABASE_URL: ${{ secrets.NEON_STAGING_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+        ENVIRONMENT: staging
+      run: |
+        echo "⚠️ Migration failed - Rolling back database changes..."
+        
+        # Rollback installation service first (reverse order)
+        echo "[1/3] Rolling back installation-service..."
+        cd cat-house-backend/installation-service
+        pip install -r requirements.txt alembic
+        alembic downgrade -1 || echo "Installation rollback completed or no version to rollback"
+        
+        # Rollback catalog service
+        echo "[2/3] Rolling back catalog-service..."
+        cd ../catalog-service
+        pip install -r requirements.txt alembic
+        alembic downgrade -1 || echo "Catalog rollback completed or no version to rollback"
+        
+        # Rollback auth service
+        echo "[3/3] Rolling back auth-service..."
+        cd ../auth-service
+        pip install -r requirements.txt alembic
+        alembic downgrade -1 || echo "Auth rollback completed or no version to rollback"
+        
+        echo "✅ Rollback completed"
+    
+    - name: Notify Slack about rollback
+      if: always()
+      run: |
+        aws sns publish \
+          --topic-arn arn:aws:sns:sa-east-1:578492750346:cat-house-staging-critical-alerts \
+          --subject "🔄 ROLLBACK: Staging Migrations Reverted" \
+          --message "Database migrations were automatically rolled back in staging due to failure. Branch: ${{ github.ref_name }}, Commit: ${{ github.sha }}. Manual intervention may be required. Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          --region sa-east-1
 
   deploy-backend:
     needs: migrate

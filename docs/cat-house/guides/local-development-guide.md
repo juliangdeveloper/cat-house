@@ -100,11 +100,28 @@ docker-compose down
 
 ## Database Management
 
+**Migration Architecture:** Each service manages its own schema independently.
+
+**Schemas:**
+- `auth` → auth-service (users table)
+- `catalog` → catalog-service (cats, permissions tables)
+- `installation` → installation-service (installations, installation_permissions tables)
+
 **Migraciones:**
 ```powershell
-.\scripts\init-local-db.ps1              # Aplicar todas
-.\scripts\generate-migrations.ps1        # Generar nuevas
+.\scripts\init-local-db.ps1              # Aplicar todas (auth + catalog + installation)
+.\scripts\generate-migrations.ps1        # Generar nuevas en cada servicio
 .\scripts\reset-and-migrate.ps1          # Reset completo (⚠️ borra datos)
+```
+
+**Generar migración para servicio específico:**
+```powershell
+cd cat-house-backend/auth-service
+docker-compose exec -T auth-service alembic revision --autogenerate -m "Add column"
+
+# O para catalog-service:
+cd cat-house-backend/catalog-service
+docker-compose exec -T catalog-service alembic revision --autogenerate -m "Add table"
 ```
 
 **Inspeccionar:**

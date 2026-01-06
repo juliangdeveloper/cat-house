@@ -236,15 +236,20 @@ erDiagram
 - Easier to maintain consistency
 
 **Service Boundaries (Logical Ownership):**
-- **auth-service:** Manages migrations, owns users table
-- **catalog-service:** Owns cats and permissions tables
-- **installation-service:** Owns installations and installation_permissions tables
+- **auth-service:** Manages auth schema migrations, owns users table
+- **catalog-service:** Manages catalog schema migrations, owns cats and permissions tables
+- **installation-service:** Manages installation schema migrations, owns installations and installation_permissions tables
 - **proxy-service:** Read-only access for request validation
 
-**Migration Strategy:**
-- Only auth-service contains Alembic configuration
-- All services import models and connect to same database
-- Single source of truth for schema changes
+**Migration Strategy (Multi-Service Architecture):**
+- **auth-service:** Contains Alembic configuration for auth schema (users table)
+- **catalog-service:** Contains Alembic configuration for catalog schema (cats, permissions tables)
+- **installation-service:** Contains Alembic configuration for installation schema (installations, installation_permissions tables)
+- Each service manages its own schema independently
+- Migrations run sequentially in order: auth → catalog → installation
+- All services connect to the same database (cathouse) but manage separate schemas
+- CI/CD pipelines execute all three migrations in sequence
+- Local development scripts (init-local-db.ps1, init-local-db.sh) run all migrations
 
 ## Performance Considerations
 
