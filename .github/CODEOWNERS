@@ -1,0 +1,17 @@
+# CODEOWNERS - Define who owns/reviews code in different parts of the repo
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything (you maintain control)
+* @juliangdeveloper
+
+# Collaborator can work freely in their development branch
+# But PRs still require your approval due to branch protection
+/dev/julianclawd/ @julianclawd @juliangdeveloper
+
+# Critical paths - only you can approve changes
+/.github/ @juliangdeveloper
+/terraform/ @juliangdeveloper
+/cat-house-backend/terraform/ @juliangdeveloper
+/.github/workflows/ @juliangdeveloper
+/scripts/ @juliangdeveloper
+docker-compose.yml @juliangdeveloper

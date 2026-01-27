@@ -1,0 +1,51 @@
+name: 🔒 Branch Protection Validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate-permissions:
+    runs-on: ubuntu-latest
+    name: Validate Deployment Permissions
+    
+    steps:
+      - name: Check if push to main
+        if: github.event_name == 'push'
+        run: |
+          echo "✅ Direct push to main detected"
+          echo "Actor: ${{ github.actor }}"
+          echo "Owner: juliangdeveloper"
+          
+          # Only owner can push to main
+          if [ "${{ github.actor }}" != "juliangdeveloper" ]; then
+            echo "❌ ERROR: Only @juliangdeveloper can push to main"
+            exit 1
+          fi
+          echo "✅ Permission granted"
+
+      - name: PR Info
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "📝 Pull Request opened by: ${{ github.event.pull_request.user.login }}"
+          echo "From: ${{ github.event.pull_request.head.ref }}"
+          echo "To: ${{ github.event.pull_request.base.ref }}"
+          echo "Requires review from: @juliangdeveloper"
+
+  deployment-check:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[deploy]') || contains(github.event.head_commit.message, '[production]')
+    
+    steps:
+      - name: Validate Deployment Authorization
+        run: |
+          echo "🚀 Deployment keyword detected in commit message"
+          
+          if [ "${{ github.actor }}" != "juliangdeveloper" ]; then
+            echo "❌ ERROR: Only @juliangdeveloper can trigger deployments"
+            echo "Remove [deploy] or [production] from your commit message"
+            exit 1
+          fi
+          echo "✅ Deployment authorized"
